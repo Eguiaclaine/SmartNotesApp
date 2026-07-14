@@ -85,15 +85,15 @@ Record the app running on a **physical Android phone** or **emulator/simulator**
 
 ---
 
-### Dark mode & settings (3:45 – 4:15)
+### Settings & logout (3:45 – 4:15)
 
-> “In **Settings**, I can toggle **dark mode**. The choice is saved on the device using **SharedPreferences**, so it stays even after I close the app.
+> “In **Settings**, I can review notification info and app details.
 >
 > Here is also the **Log out** button. When I tap it and confirm, the app shows a **sign-out loading screen** and safely returns me to the login page.”
 
-**On screen:** Settings → toggle dark mode → show UI in dark theme → log out → loading (“Signing you out safely…”) → login screen.
+**On screen:** Settings → log out → loading (“Signing you out safely…”) → login screen.
 
-**Technical points:** ThemeProvider, SharedPreferences, auth sign-out flow, animated loading screen.
+**Technical points:** auth sign-out flow, animated loading screen.
 
 ---
 
@@ -112,7 +112,7 @@ Record the app running on a **physical Android phone** or **emulator/simulator**
 - [ ] Video is **3 to 5 minutes** long  
 - [ ] App runs on **simulator, emulator, or physical device**  
 - [ ] You **narrate** each step in your own words  
-- [ ] You showed **sign up, login, profile, notes CRUD, dark mode, and logout**  
+- [ ] You showed **sign up, login, profile, notes CRUD, Life Spaces, archive, and logout**  
 - [ ] You mentioned at least these technical features:
   - Supabase Authentication  
   - Supabase Database & Realtime  
@@ -120,7 +120,7 @@ Record the app running on a **physical Android phone** or **emulator/simulator**
   - Notes CRUD  
   - Input validation  
   - Local notifications (optional reminders)  
-  - Dark mode with SharedPreferences  
+  - Life Spaces organizer + Archive  
   - Row Level Security (brief mention)  
 
 ---

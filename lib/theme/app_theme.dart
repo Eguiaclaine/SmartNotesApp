@@ -7,8 +7,6 @@ class AppColors {
   static const candyBlush = Color(0xFFFFD6E7);
   static const candyRose = Color(0xFFFF6B9D);
   static const lightBackground = Color(0xFFFFF5F8);
-  static const darkBackground = Color(0xFF1A1216);
-  static const darkSurface = Color(0xFF2A1E24);
 
   static const spacePalette = <Color>[
     Color(0xFFFF8FB8),
@@ -52,31 +50,6 @@ class AppTheme {
         scrolledUnderElevation: 0,
         backgroundColor: Colors.transparent,
         foregroundColor: scheme.onSurface,
-      ),
-    );
-  }
-
-  static ThemeData dark() {
-    final scheme = ColorScheme.fromSeed(
-      seedColor: AppColors.seed,
-      brightness: Brightness.dark,
-      primary: AppColors.candyPink,
-      secondary: AppColors.candyRose,
-      surface: AppColors.darkSurface,
-    );
-    return _base(scheme).copyWith(
-      scaffoldBackgroundColor: AppColors.darkBackground,
-      appBarTheme: const AppBarTheme(
-        centerTitle: false,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        backgroundColor: Colors.transparent,
-      ),
-      cardTheme: CardThemeData(
-        elevation: 0,
-        color: AppColors.darkSurface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        margin: EdgeInsets.zero,
       ),
     );
   }

@@ -12,7 +12,7 @@ Unique feature: **Life Spaces** — organize notes into themed boards (emoji + c
 - **Archive / restore** notes
 - Search notes
 - Local notification reminders
-- Candy pink Material 3 theme + dark mode
+- Candy pink Material 3 theme
 - Input validation and data sanitization
 - Supabase Realtime sync
 

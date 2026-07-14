@@ -22,7 +22,7 @@ This application includes a feature of secure user authentication which will hel
 
 The primary feature of this software application is **Notes Management System** that allows users to make, read, edit, and delete their notes. Users will benefit from the safe storage and effective management of their notes using the easy-to-use and convenient interface of the application. Notes can be saved without restrictions, and reminders are optional — validation applies only when a user sets a reminder.
 
-In order to increase the user friendliness of the application, it is possible to incorporate **Dark Mode** that would allow users to change from light to dark theme depending on the personal preference. Preferences will be saved locally by the application.
+The application uses a consistent **candy pink** theme for a distinctive and user-friendly look.
 
 Moreover, it is necessary to include **Local Notifications** into the features list because it will help to remind users about certain notes and tasks that they need to complete. The Android APK includes notification permissions for phone reminders.
 
@@ -54,7 +54,7 @@ RONAR MORALES 3
 - Search Notes
 - Optional Note Reminders (validated only when set)
 - Local Notification Reminders
-- Candy Pink Theme + Dark Mode
+- Candy Pink Theme
 - Input Validation and Data Sanitization
 - Responsive and User-Friendly Interface
 - Secure Data Storage and Access Control (Supabase RLS)
@@ -112,7 +112,7 @@ RONAR MORALES 5
 ## 5. Architecture / Flow Diagram
 
 ```
-User → Authentication (Supabase) → Profile → Notes CRUD → Dark Mode → Notification
+User → Authentication (Supabase) → Profile → Notes CRUD → Life Spaces / Archive → Notification
                               ↓
                     Supabase PostgreSQL + Realtime
                               ↓
@@ -145,7 +145,7 @@ RONAR MORALES 6
 Dropbox |Final Module | Final Project Submission  
 RONAR MORALES 7
 
-| Edit Note Screen | Note Dark Mode |
+| Edit Note Screen | Life Spaces Screen |
 |------------------|----------------|
 | *(Insert screenshot)* | *(Insert screenshot)* |
 
@@ -160,7 +160,7 @@ RONAR MORALES 8
 
 ## 7. Conclusion
 
-Currently, login, sign up, profile editing, and CRUD notes are functional with Supabase as the backend. The application supports dark mode, optional note reminders with local notifications, realtime data sync, and a polished auth transition experience including sign-out loading.
+Currently, login, sign up, profile editing, and CRUD notes are functional with Supabase as the backend. The application supports Life Spaces, archive, optional note reminders with local notifications, realtime data sync, and a polished auth transition experience including sign-out loading.
 
 The project is deployable as a **Flutter Android APK** (`build/app/outputs/flutter-apk/app-debug.apk`) with a custom launcher icon. The app can also be run on **Chrome (web)** for development and testing.
 

@@ -8,7 +8,6 @@ import '../models/space.dart';
 class StorageService {
   static const _notesKey = 'cached_notes';
   static const _spacesKey = 'cached_spaces';
-  static const _themeKey = 'theme_mode_dark';
 
   Future<List<Note>> loadNotes() async {
     final prefs = await SharedPreferences.getInstance();
@@ -38,15 +37,5 @@ class StorageService {
     final prefs = await SharedPreferences.getInstance();
     final raw = spaces.map((space) => jsonEncode(space.toJson())).toList();
     await prefs.setStringList(_spacesKey, raw);
-  }
-
-  Future<void> setThemeMode(bool isDark) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_themeKey, isDark);
-  }
-
-  Future<bool> getThemeMode() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_themeKey) ?? false;
   }
 }

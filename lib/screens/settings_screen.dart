@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
-import '../providers/theme_provider.dart';
 import '../widgets/page_container.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -37,7 +36,6 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = context.watch<ThemeProvider>();
     final authProvider = context.watch<AuthProvider>();
     final scheme = Theme.of(context).colorScheme;
     final isSigningOut = authProvider.isSigningOut;
@@ -58,17 +56,6 @@ class SettingsScreen extends StatelessWidget {
             Card(
               child: Column(
                 children: [
-                  SwitchListTile(
-                    title: const Text('Dark mode'),
-                    subtitle: const Text('Saved locally with SharedPreferences'),
-                    secondary: Icon(
-                      themeProvider.isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
-                      color: scheme.primary,
-                    ),
-                    value: themeProvider.isDark,
-                    onChanged: isSigningOut ? null : (_) => themeProvider.toggleTheme(),
-                  ),
-                  const Divider(height: 1),
                   ListTile(
                     leading: Icon(Icons.notifications_active_outlined, color: scheme.primary),
                     title: const Text('Local notifications'),
