@@ -83,8 +83,35 @@ CREATE TABLE IF NOT EXISTS public.notes (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-COMMENT ON TABLE public.notes IS 'Smart Notes — user notes with optional reminders';
+COMMENT ON TABLE public.notes IS 'NoteVault — user notes with optional reminders, archive, and Life Spaces';
 COMMENT ON COLUMN public.notes.reminder_at IS 'Optional reminder; only validated when set (must be in the future)';
+
+-- -----------------------------------------------------------------------------
+-- 03b_spaces.sql (Life Spaces organizer)
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.spaces (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES auth.users (id) ON DELETE CASCADE,
+  name TEXT NOT NULL CHECK (
+    char_length(trim(name)) > 0
+    AND char_length(name) <= 40
+  ),
+  emoji TEXT NOT NULL DEFAULT '💗',
+  color_hex TEXT NOT NULL DEFAULT '#FF8FB8',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE public.spaces IS 'NoteVault Life Spaces — unique organizer boards for notes';
+
+ALTER TABLE public.notes
+  ADD COLUMN IF NOT EXISTS is_archived BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE public.notes
+  ADD COLUMN IF NOT EXISTS archived_at TIMESTAMPTZ;
+ALTER TABLE public.notes
+  ADD COLUMN IF NOT EXISTS space_id UUID REFERENCES public.spaces (id) ON DELETE SET NULL;
+ALTER TABLE public.notes
+  ADD COLUMN IF NOT EXISTS color_tag TEXT;
 
 -- -----------------------------------------------------------------------------
 -- 04_storage.sql
@@ -116,6 +143,7 @@ SET
 -- -----------------------------------------------------------------------------
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.spaces ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
 CREATE POLICY "Users can view own profile"
@@ -144,6 +172,22 @@ CREATE POLICY "Users can update own notes"
 DROP POLICY IF EXISTS "Users can delete own notes" ON public.notes;
 CREATE POLICY "Users can delete own notes"
   ON public.notes FOR DELETE USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can view own spaces" ON public.spaces;
+CREATE POLICY "Users can view own spaces"
+  ON public.spaces FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can insert own spaces" ON public.spaces;
+CREATE POLICY "Users can insert own spaces"
+  ON public.spaces FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can update own spaces" ON public.spaces;
+CREATE POLICY "Users can update own spaces"
+  ON public.spaces FOR UPDATE USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can delete own spaces" ON public.spaces;
+CREATE POLICY "Users can delete own spaces"
+  ON public.spaces FOR DELETE USING (auth.uid() = user_id);
 
 DROP POLICY IF EXISTS "Users can upload own avatar" ON storage.objects;
 CREATE POLICY "Users can upload own avatar"
@@ -181,6 +225,9 @@ CREATE INDEX IF NOT EXISTS idx_notes_created_at ON public.notes (created_at DESC
 CREATE INDEX IF NOT EXISTS idx_notes_user_created ON public.notes (user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_notes_reminder_at ON public.notes (reminder_at) WHERE reminder_at IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_profiles_email ON public.profiles (email);
+CREATE INDEX IF NOT EXISTS idx_spaces_user_id ON public.spaces (user_id);
+CREATE INDEX IF NOT EXISTS idx_notes_space_id ON public.notes (space_id);
+CREATE INDEX IF NOT EXISTS idx_notes_is_archived ON public.notes (user_id, is_archived);
 
 -- -----------------------------------------------------------------------------
 -- 07_functions_triggers.sql
@@ -201,6 +248,11 @@ CREATE TRIGGER set_profiles_updated_at
 DROP TRIGGER IF EXISTS set_notes_updated_at ON public.notes;
 CREATE TRIGGER set_notes_updated_at
   BEFORE UPDATE ON public.notes
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+DROP TRIGGER IF EXISTS set_spaces_updated_at ON public.spaces;
+CREATE TRIGGER set_spaces_updated_at
+  BEFORE UPDATE ON public.spaces
   FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
 CREATE OR REPLACE FUNCTION public.validate_note_reminder()
@@ -272,6 +324,16 @@ BEGIN
   ) THEN
     ALTER PUBLICATION supabase_realtime ADD TABLE public.profiles;
   END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime'
+      AND schemaname = 'public'
+      AND tablename = 'spaces'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.spaces;
+  END IF;
 END;
 $$;
 
@@ -310,8 +372,10 @@ $$;
 GRANT USAGE ON SCHEMA public TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.profiles TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.notes TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.spaces TO authenticated;
 GRANT ALL ON public.profiles TO service_role;
 GRANT ALL ON public.notes TO service_role;
+GRANT ALL ON public.spaces TO service_role;
 
 COMMENT ON FUNCTION public.sync_auth_users_to_profiles IS
   'Backfill or update profiles from auth.users after sign-up is enabled';

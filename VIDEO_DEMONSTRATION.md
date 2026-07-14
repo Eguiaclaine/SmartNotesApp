@@ -1,6 +1,6 @@
 # 6. Video Demonstration (3–5 Minutes)
 
-**Project:** Smart Notes App  
+**Project:** NoteVault App  
 **Submitted by:** Ronar D. Morales  
 **Course:** CC106 — Bachelor of Science in Information System  
 **Platform:** Android APK / Chrome (web)
@@ -19,7 +19,7 @@ Record the app running on a **physical Android phone** or **emulator/simulator**
 
 ### Opening — App intro (0:00 – 0:30)
 
-> “Good day. For my CC106 Final Project, I will demonstrate **Smart Notes** — a note-taking application I built using **Flutter** with a **Supabase** backend.
+> “Good day. For my CC106 Final Project, I will demonstrate **NoteVault** — a candy-pink note-taking app I built with **Flutter** and **Supabase**, including Life Spaces organizer and Archive.
 >
 > If you are watching on Android, you can see our custom app icon on the home screen. When I open the app, it loads with a short splash screen, then takes me to the login page.”
 
@@ -99,7 +99,7 @@ Record the app running on a **physical Android phone** or **emulator/simulator**
 
 ### Closing (4:15 – 5:00)
 
-> “To summarize: Smart Notes uses **Flutter** for the frontend, **Supabase** for authentication, database, storage, and realtime sync, **Provider** for state management, and **local notifications** for optional reminders.
+> “To summarize: NoteVault uses **Flutter**, **Supabase**, **Provider**, Life Spaces organizer, Archive, and **local notifications** for optional reminders.
 >
 > Security is handled through validation, sanitization, and Supabase **Row Level Security**. Thank you for watching my demonstration.”
 

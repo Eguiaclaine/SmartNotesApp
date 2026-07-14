@@ -66,6 +66,13 @@ class ValidationUtils {
     }
     return null;
   }
+
+  static String? validateSpaceName(String? value) {
+    final sanitized = SanitizationUtils.sanitizeText(value, maxLength: 40);
+    if (sanitized.isEmpty) return 'Enter a space name';
+    if (sanitized.length < 2) return 'Space name is too short';
+    return null;
+  }
 }
 
 class SanitizationUtils {

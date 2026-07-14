@@ -1,7 +1,7 @@
 Dropbox |Final Module | Final Project Submission  
 RONAR MORALES 1
 
-# Final Project Report - Smart Notes App
+# Final Project Report - NoteVault App
 
 **Submitted by:** Ronar D. Morales  
 **GitHub Repository:** https://github.com/RONAR-cell/NoteProfile  
@@ -16,7 +16,7 @@ RONAR MORALES 2
 
 ## 1. Introduction
 
-Smart Notes App is a note-taking app which has been created by using the Flutter development tool, assisting its users in safely managing their personal notes, as well as having a customisable user profile. This application has been created for the use of people like students and professionals who require a platform where they can save their important notes and reminders.
+NoteVault is a candy-pink note-taking app created with Flutter, helping users safely manage personal notes with a customisable profile. Unique features include **Life Spaces** (organize notes into themed boards) and an **Archive** vault for stored notes.
 
 This application includes a feature of secure user authentication which will help users to sign up and log in using **Supabase Authentication**. Every user has a unique profile page where they can edit personal information and upload profile pictures.
 
@@ -49,14 +49,17 @@ RONAR MORALES 3
 - Profile Page with Editable User Information
 - Profile Picture Upload
 - Create, Read, Update, and Delete (CRUD) Notes
+- **Life Spaces Organizer** (emoji + candy color boards)
+- **Archive / Restore Notes**
+- Search Notes
 - Optional Note Reminders (validated only when set)
 - Local Notification Reminders
-- Dark Mode Support
+- Candy Pink Theme + Dark Mode
 - Input Validation and Data Sanitization
 - Responsive and User-Friendly Interface
 - Secure Data Storage and Access Control (Supabase RLS)
-- Supabase Realtime Sync for Notes and Profiles
-- Animated Loading Screens (Sign In, Sign Up, Sign Out)
+- Supabase Realtime Sync
+- Animated Loading Screens
 - Android APK with Custom Launcher Icon
 
 ---

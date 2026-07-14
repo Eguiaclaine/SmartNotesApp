@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:application/providers/auth_provider.dart' as app_auth;
 import 'package:application/providers/notes_provider.dart';
 import 'package:application/providers/profile_provider.dart';
+import 'package:application/providers/spaces_provider.dart';
 import 'package:application/providers/theme_provider.dart';
 import 'package:application/screens/auth_screen.dart';
 import 'package:application/screens/notes_home_screen.dart';
@@ -85,7 +86,7 @@ class SmartNotesView extends StatelessWidget {
           return _buildMaterialApp(
             themeProvider,
             home: const AppLoadingScreen(
-              message: 'Loading Smart Notes...',
+              message: 'Loading NoteVault...',
             ),
           );
         }
@@ -100,6 +101,9 @@ class SmartNotesView extends StatelessWidget {
           providers: [
             ChangeNotifierProvider(
               create: (_) => NotesProvider(user.id, supabaseReady: true),
+            ),
+            ChangeNotifierProvider(
+              create: (_) => SpacesProvider(user.id, supabaseReady: true),
             ),
             ChangeNotifierProvider(
               create: (_) => ProfileProvider(user.id, supabaseReady: true),
@@ -119,13 +123,13 @@ class SmartNotesView extends StatelessWidget {
       app_auth.AuthLoadingPhase.signingOut => Icons.logout_rounded,
       app_auth.AuthLoadingPhase.signingIn => Icons.login_rounded,
       app_auth.AuthLoadingPhase.signingUp => Icons.person_add_alt_1_rounded,
-      app_auth.AuthLoadingPhase.none => Icons.edit_note_rounded,
+      app_auth.AuthLoadingPhase.none => Icons.lock_rounded,
     };
   }
 
   Widget _buildMaterialApp(ThemeProvider themeProvider, {required Widget home}) {
     return MaterialApp(
-      title: 'Smart Notes',
+      title: 'NoteVault',
       debugShowCheckedModeBanner: false,
       themeMode: themeProvider.themeMode,
       theme: AppTheme.light(),

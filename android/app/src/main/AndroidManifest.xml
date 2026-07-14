@@ -18,7 +18,7 @@
 
     <application
 
-        android:label="Smart Notes"
+        android:label="NoteVault"
 
         android:name="${applicationName}"
 

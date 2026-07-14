@@ -77,8 +77,8 @@ class SettingsScreen extends StatelessWidget {
                   const Divider(height: 1),
                   ListTile(
                     leading: Icon(Icons.info_outline_rounded, color: scheme.primary),
-                    title: const Text('About Smart Notes'),
-                    subtitle: const Text('CC106 Final Project — Ronar D. Morales'),
+                    title: const Text('About NoteVault'),
+                    subtitle: const Text('CC106 Final Project — candy pink notes + Life Spaces'),
                   ),
                 ],
               ),

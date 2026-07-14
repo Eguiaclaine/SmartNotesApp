@@ -66,7 +66,7 @@ class NotificationService {
 
           'Note Reminders',
 
-          description: 'Reminders for Smart Notes',
+          description: 'Reminders for NoteVault',
 
           importance: Importance.high,
 
@@ -142,7 +142,7 @@ class NotificationService {
 
           'Note Reminders',
 
-          channelDescription: 'Reminders for Smart Notes',
+          channelDescription: 'Reminders for NoteVault',
 
           importance: Importance.high,
 

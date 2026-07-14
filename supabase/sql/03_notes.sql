@@ -19,5 +19,5 @@ CREATE TABLE IF NOT EXISTS public.notes (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-COMMENT ON TABLE public.notes IS 'Smart Notes — user notes with optional reminders';
+COMMENT ON TABLE public.notes IS 'NoteVault — user notes with optional reminders';
 COMMENT ON COLUMN public.notes.reminder_at IS 'Optional reminder; only validated when set (must be in the future)';

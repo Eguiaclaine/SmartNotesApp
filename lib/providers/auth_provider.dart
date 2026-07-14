@@ -68,7 +68,7 @@ class AuthProvider extends ChangeNotifier {
 
         AuthLoadingPhase.signingIn => 'Signing you in...',
 
-        AuthLoadingPhase.none => 'Loading Smart Notes...',
+        AuthLoadingPhase.none => 'Loading NoteVault...',
 
       };
 

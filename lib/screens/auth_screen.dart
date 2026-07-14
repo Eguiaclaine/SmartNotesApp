@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
+import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
 import '../widgets/auth_form.dart';
 
@@ -38,62 +39,110 @@ class _AuthScreenState extends State<AuthScreen> {
     final themeProvider = context.watch<ThemeProvider>();
 
     return Scaffold(
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Center(
-              child: SingleChildScrollView(
-                padding: pagePadding(context),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 420),
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.edit_note_rounded,
-                        size: 64,
-                        color: scheme.primary,
-                      ),
-                      const SizedBox(height: 20),
-                      Text(
-                        _isLogin ? 'Welcome back' : 'Join Smart Notes',
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
+      body: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.candyBlush,
+              AppColors.lightBackground,
+              scheme.surface,
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Stack(
+            children: [
+              Center(
+                child: SingleChildScrollView(
+                  padding: pagePadding(context),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 420),
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 88,
+                          height: 88,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(
+                              colors: [
+                                AppColors.candyPink,
+                                AppColors.candyRose,
+                              ],
                             ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _isLogin ? 'Sign in to Smart Notes' : 'Create Account',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: scheme.onSurfaceVariant,
-                            ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 28),
-                      AuthForm(
-                        key: ValueKey('auth-${_isLogin ? 'login' : 'register'}-$_registeredEmail'),
-                        isLogin: _isLogin,
-                        initialEmail: _registeredEmail,
-                        onToggleMode: _isLogin ? _switchToRegister : () => _switchToLogin(),
-                        onRegisterSuccess: (email) => _switchToLogin(email: email),
-                      ),
-                    ],
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.candyRose.withValues(alpha: 0.35),
+                                blurRadius: 24,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.lock_rounded,
+                            size: 42,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Text(
+                          'NoteVault',
+                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.candyRose,
+                              ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _isLogin ? 'Welcome back' : 'Create your vault',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _isLogin
+                              ? 'Sign in to your candy note vault'
+                              : 'Join NoteVault and organize with Life Spaces',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                color: scheme.onSurfaceVariant,
+                              ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 28),
+                        AuthForm(
+                          key: ValueKey(
+                            'auth-${_isLogin ? 'login' : 'register'}-$_registeredEmail',
+                          ),
+                          isLogin: _isLogin,
+                          initialEmail: _registeredEmail,
+                          onToggleMode:
+                              _isLogin ? _switchToRegister : () => _switchToLogin(),
+                          onRegisterSuccess: (email) => _switchToLogin(email: email),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-            Positioned(
-              top: 8,
-              right: 8,
-              child: IconButton(
-                onPressed: themeProvider.toggleTheme,
-                icon: Icon(
-                  themeProvider.isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+              Positioned(
+                top: 8,
+                right: 8,
+                child: IconButton(
+                  onPressed: themeProvider.toggleTheme,
+                  icon: Icon(
+                    themeProvider.isDark
+                        ? Icons.light_mode_rounded
+                        : Icons.dark_mode_rounded,
+                  ),
+                  tooltip: themeProvider.isDark ? 'Light mode' : 'Dark mode',
                 ),
-                tooltip: themeProvider.isDark ? 'Light mode' : 'Dark mode',
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

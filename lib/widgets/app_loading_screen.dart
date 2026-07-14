@@ -5,7 +5,7 @@ class AppLoadingScreen extends StatefulWidget {
   const AppLoadingScreen({
     super.key,
     required this.message,
-    this.icon = Icons.edit_note_rounded,
+    this.icon = Icons.lock_rounded,
   });
 
   final String message;
@@ -100,7 +100,7 @@ class _AppLoadingScreenState extends State<AppLoadingScreen>
                   ),
                   const SizedBox(height: 28),
                   Text(
-                    'Smart Notes',
+                    'NoteVault',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
