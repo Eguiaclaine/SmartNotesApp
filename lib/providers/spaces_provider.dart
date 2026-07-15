@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
@@ -8,10 +10,13 @@ import '../services/storage_service.dart';
 
 class SpacesProvider extends ChangeNotifier {
   SpacesProvider(this.userId, {this.supabaseReady = true}) {
-    _loadSpaces();
-    if (supabaseReady) {
+    // Defer load so we never notify during widget/provider build.
+    scheduleMicrotask(() async {
+      if (_disposed) return;
+      await _loadSpaces();
+      if (_disposed || !supabaseReady) return;
       _subscribeRealtime();
-    }
+    });
   }
 
   final String userId;
@@ -23,6 +28,7 @@ class SpacesProvider extends ChangeNotifier {
   List<Space> _spaces = [];
   bool _isLoading = true;
   String? _errorMessage;
+  bool _disposed = false;
 
   List<Space> get spaces {
     final sorted = [..._spaces]
@@ -53,21 +59,25 @@ class SpacesProvider extends ChangeNotifier {
     return null;
   }
 
+  void _safeNotify() {
+    if (!_disposed) notifyListeners();
+  }
+
   Future<void> reload() async {
     await _loadSpaces();
-    if (supabaseReady) {
-      _spacesService.unsubscribe(_channel);
-      _subscribeRealtime();
-    }
+    if (_disposed || !supabaseReady) return;
+    _spacesService.unsubscribe(_channel);
+    _subscribeRealtime();
   }
 
   void _subscribeRealtime() {
     _channel = _spacesService.subscribeToSpaces(
       userId: userId,
       onChanged: (spaces) async {
+        if (_disposed) return;
         _spaces = spaces;
         await _storageService.saveSpaces(_spaces);
-        notifyListeners();
+        _safeNotify();
       },
       onStatus: (status, error) {
         if (error != null && kDebugMode) {
@@ -79,6 +89,7 @@ class SpacesProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
     _spacesService.unsubscribe(_channel);
     super.dispose();
   }
@@ -86,21 +97,28 @@ class SpacesProvider extends ChangeNotifier {
   Future<void> _loadSpaces() async {
     _isLoading = true;
     _errorMessage = null;
-    notifyListeners();
+    _safeNotify();
     try {
       final cached = await _storageService.loadSpaces();
+      if (_disposed) return;
       _spaces = cached.where((space) => space.userId == userId).toList();
-      notifyListeners();
+      _safeNotify();
 
       if (supabaseReady) {
-        _spaces = await _spacesService.fetchSpaces(userId);
+        _spaces = await _spacesService
+            .fetchSpaces(userId)
+            .timeout(const Duration(seconds: 15));
+        if (_disposed) return;
         await _storageService.saveSpaces(_spaces);
       }
+    } on TimeoutException {
+      _errorMessage =
+          'Life Spaces took too long to load. Check your connection, then pull to refresh.';
     } catch (error) {
       _errorMessage = _friendlyError(error);
     } finally {
       _isLoading = false;
-      notifyListeners();
+      _safeNotify();
     }
   }
 
@@ -142,17 +160,24 @@ class SpacesProvider extends ChangeNotifier {
             await _spacesService.updateSpace(item.copyWith(isFocus: false));
           }
         }
-        await _spacesService.createSpace(space);
+        await _spacesService
+            .createSpace(space)
+            .timeout(const Duration(seconds: 15));
       }
 
+      if (_disposed) return false;
       _spaces = nextSpaces;
       await _storageService.saveSpaces(_spaces);
       _errorMessage = null;
-      notifyListeners();
+      _safeNotify();
       return true;
+    } on TimeoutException {
+      _errorMessage = 'Saving Life Space timed out. Try again.';
+      _safeNotify();
+      return false;
     } catch (error) {
       _errorMessage = _friendlyError(error);
-      notifyListeners();
+      _safeNotify();
       return false;
     }
   }
@@ -185,17 +210,24 @@ class SpacesProvider extends ChangeNotifier {
             await _spacesService.updateSpace(item.copyWith(isFocus: false));
           }
         }
-        await _spacesService.updateSpace(updated);
+        await _spacesService
+            .updateSpace(updated)
+            .timeout(const Duration(seconds: 15));
       }
 
+      if (_disposed) return false;
       _spaces = nextSpaces;
       await _storageService.saveSpaces(_spaces);
       _errorMessage = null;
-      notifyListeners();
+      _safeNotify();
       return true;
+    } on TimeoutException {
+      _errorMessage = 'Updating Life Space timed out. Try again.';
+      _safeNotify();
+      return false;
     } catch (error) {
       _errorMessage = _friendlyError(error);
-      notifyListeners();
+      _safeNotify();
       return false;
     }
   }
@@ -215,16 +247,23 @@ class SpacesProvider extends ChangeNotifier {
   Future<bool> deleteSpace(String id) async {
     try {
       if (supabaseReady) {
-        await _spacesService.deleteSpace(id);
+        await _spacesService
+            .deleteSpace(id)
+            .timeout(const Duration(seconds: 15));
       }
+      if (_disposed) return false;
       _spaces.removeWhere((space) => space.id == id);
       await _storageService.saveSpaces(_spaces);
       _errorMessage = null;
-      notifyListeners();
+      _safeNotify();
       return true;
+    } on TimeoutException {
+      _errorMessage = 'Deleting Life Space timed out. Try again.';
+      _safeNotify();
+      return false;
     } catch (error) {
       _errorMessage = _friendlyError(error);
-      notifyListeners();
+      _safeNotify();
       return false;
     }
   }

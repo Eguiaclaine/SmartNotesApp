@@ -38,30 +38,36 @@ class SmartNotesApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => app_auth.AuthProvider()),
       ],
-      child: SmartNotesView(supabaseReady: supabaseReady),
+      // Keep ONE MaterialApp so navigation (Life Spaces, editor, etc.) is not destroyed
+      // when auth/stream rebuilds — that was causing `_dependents.isEmpty` crashes.
+      child: MaterialApp(
+        title: 'NoteVault',
+        debugShowCheckedModeBanner: false,
+        themeMode: ThemeMode.light,
+        theme: AppTheme.light(),
+        home: _AppRoot(supabaseReady: supabaseReady),
+      ),
     );
   }
 }
 
-class SmartNotesView extends StatelessWidget {
-  const SmartNotesView({super.key, required this.supabaseReady});
+class _AppRoot extends StatelessWidget {
+  const _AppRoot({required this.supabaseReady});
 
   final bool supabaseReady;
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = context.watch<app_auth.AuthProvider>();
-
     if (!supabaseReady) {
-      return _buildMaterialApp(home: const _BackendUnavailableScreen());
+      return const _BackendUnavailableScreen();
     }
 
+    final authProvider = context.watch<app_auth.AuthProvider>();
+
     if (authProvider.isTransitioning) {
-      return _buildMaterialApp(
-        home: AppLoadingScreen(
-          message: authProvider.loadingMessage,
-          icon: _loadingIcon(authProvider.loadingPhase),
-        ),
+      return AppLoadingScreen(
+        message: authProvider.loadingMessage,
+        icon: _loadingIcon(authProvider.loadingPhase),
       );
     }
 
@@ -77,20 +83,16 @@ class SmartNotesView extends StatelessWidget {
 
         if (snapshot.connectionState == ConnectionState.waiting &&
             session == null) {
-          return _buildMaterialApp(
-            home: const AppLoadingScreen(
-              message: 'Loading NoteVault...',
-            ),
-          );
+          return const AppLoadingScreen(message: 'Loading NoteVault...');
         }
 
         final user = session?.user;
         if (user == null) {
-          return _buildMaterialApp(home: const AuthScreen());
+          return const AuthScreen();
         }
 
         return MultiProvider(
-          key: ValueKey(user.id),
+          key: ValueKey('session-${user.id}'),
           providers: [
             ChangeNotifierProvider(
               create: (_) => NotesProvider(user.id, supabaseReady: true),
@@ -102,7 +104,7 @@ class SmartNotesView extends StatelessWidget {
               create: (_) => ProfileProvider(user.id, supabaseReady: true),
             ),
           ],
-          child: _buildMaterialApp(home: const NotesHomeScreen()),
+          child: const NotesHomeScreen(),
         );
       },
     );
@@ -115,16 +117,6 @@ class SmartNotesView extends StatelessWidget {
       app_auth.AuthLoadingPhase.signingUp => Icons.person_add_alt_1_rounded,
       app_auth.AuthLoadingPhase.none => Icons.lock_rounded,
     };
-  }
-
-  Widget _buildMaterialApp({required Widget home}) {
-    return MaterialApp(
-      title: 'NoteVault',
-      debugShowCheckedModeBanner: false,
-      themeMode: ThemeMode.light,
-      theme: AppTheme.light(),
-      home: home,
-    );
   }
 }
 

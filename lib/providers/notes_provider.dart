@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
@@ -9,10 +11,12 @@ import '../services/storage_service.dart';
 
 class NotesProvider extends ChangeNotifier {
   NotesProvider(this.userId, {this.supabaseReady = true}) {
-    _loadNotes();
-    if (supabaseReady) {
+    scheduleMicrotask(() async {
+      if (_disposed) return;
+      await _loadNotes();
+      if (_disposed || !supabaseReady) return;
       _subscribeRealtime();
-    }
+    });
   }
 
   final String userId;
@@ -29,6 +33,7 @@ class NotesProvider extends ChangeNotifier {
   String _searchQuery = '';
   String? _filterSpaceId;
   bool _showArchivedOnly = false;
+  bool _disposed = false;
 
   List<Note> get notes => _notes;
   bool get isLoading => _isLoading;
@@ -82,41 +87,46 @@ class NotesProvider extends ChangeNotifier {
 
   void setSearchQuery(String value) {
     _searchQuery = value;
-    notifyListeners();
+    _safeNotify();
   }
 
   void setFilterSpaceId(String? spaceId) {
     _filterSpaceId = spaceId;
-    notifyListeners();
+    _safeNotify();
   }
 
   void setShowArchivedOnly(bool value) {
     _showArchivedOnly = value;
-    notifyListeners();
+    _safeNotify();
+  }
+
+  void _safeNotify() {
+    if (!_disposed) notifyListeners();
   }
 
   Future<void> reload() async {
     await _loadNotes();
-    if (supabaseReady) {
-      _resubscribeRealtime();
-    }
+    if (_disposed || !supabaseReady) return;
+    _resubscribeRealtime();
   }
 
   void _subscribeRealtime() {
     _channel = _notesService.subscribeToNotes(
       userId: userId,
       onChanged: (notes) async {
+        if (_disposed) return;
         _notes = notes;
         await _storageService.saveNotes(_notes);
         await _syncReminders();
-        notifyListeners();
+        _safeNotify();
       },
       onStatus: (status, error) {
+        if (_disposed) return;
         _isRealtimeConnected = status == RealtimeSubscribeStatus.subscribed;
         if (error != null && kDebugMode) {
           debugPrint('Notes realtime error: $error');
         }
-        notifyListeners();
+        _safeNotify();
       },
     );
   }
@@ -128,6 +138,7 @@ class NotesProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
     _notesService.unsubscribe(_channel);
     super.dispose();
   }
@@ -135,29 +146,35 @@ class NotesProvider extends ChangeNotifier {
   Future<void> _loadNotes() async {
     _isLoading = true;
     _errorMessage = null;
-    notifyListeners();
+    _safeNotify();
     try {
       final cached = await _storageService.loadNotes();
+      if (_disposed) return;
       _notes = cached.where((note) => note.userId == userId).toList();
-      notifyListeners();
+      _safeNotify();
 
       if (supabaseReady) {
-        final remote = await _notesService.fetchNotes(userId);
+        final remote = await _notesService
+            .fetchNotes(userId)
+            .timeout(const Duration(seconds: 15));
+        if (_disposed) return;
         _notes = remote;
         await _storageService.saveNotes(_notes);
         await _syncReminders();
       }
+    } on TimeoutException {
+      _errorMessage = 'Notes took too long to load. Pull to refresh.';
     } catch (error) {
       _errorMessage = _friendlyError(error);
     } finally {
       _isLoading = false;
-      notifyListeners();
+      _safeNotify();
     }
   }
 
   Future<void> _persistLocal() async {
     await _storageService.saveNotes(_notes);
-    notifyListeners();
+    _safeNotify();
   }
 
   Future<void> _syncReminders() async {
@@ -177,7 +194,7 @@ class NotesProvider extends ChangeNotifier {
       return true;
     } catch (error) {
       _errorMessage = _friendlyError(error);
-      notifyListeners();
+      _safeNotify();
       return false;
     }
   }
@@ -187,6 +204,7 @@ class NotesProvider extends ChangeNotifier {
       if (supabaseReady) {
         await _notesService.updateNote(note);
       }
+      if (_disposed) return false;
       _notes = _notes.map((item) => item.id == note.id ? note : item).toList();
       _errorMessage = null;
       await _persistLocal();
@@ -194,7 +212,7 @@ class NotesProvider extends ChangeNotifier {
       return true;
     } catch (error) {
       _errorMessage = _friendlyError(error);
-      notifyListeners();
+      _safeNotify();
       return false;
     }
   }
@@ -235,7 +253,7 @@ class NotesProvider extends ChangeNotifier {
       return true;
     } catch (error) {
       _errorMessage = _friendlyError(error);
-      notifyListeners();
+      _safeNotify();
       return false;
     }
   }

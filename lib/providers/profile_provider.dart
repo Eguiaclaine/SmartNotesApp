@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -7,10 +9,12 @@ import '../utils/validation_utils.dart';
 
 class ProfileProvider extends ChangeNotifier {
   ProfileProvider(this.userId, {this.supabaseReady = true}) {
-    loadProfile();
-    if (supabaseReady) {
+    scheduleMicrotask(() async {
+      if (_disposed) return;
+      await loadProfile();
+      if (_disposed || !supabaseReady) return;
       _subscribeRealtime();
-    }
+    });
   }
 
   final String userId;
@@ -23,6 +27,7 @@ class ProfileProvider extends ChangeNotifier {
   bool _isSaving = false;
   String? _errorMessage;
   bool _isRealtimeConnected = false;
+  bool _disposed = false;
 
   UserProfile? get profile => _profile;
   bool get isLoading => _isLoading;
@@ -30,25 +35,32 @@ class ProfileProvider extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   bool get isRealtimeConnected => _isRealtimeConnected;
 
+  void _safeNotify() {
+    if (!_disposed) notifyListeners();
+  }
+
   void _subscribeRealtime() {
     _channel = _profileService.subscribeToProfile(
       userId: userId,
       onChanged: (profile) {
+        if (_disposed) return;
         _profile = profile;
-        notifyListeners();
+        _safeNotify();
       },
       onStatus: (status, error) {
+        if (_disposed) return;
         _isRealtimeConnected = status == RealtimeSubscribeStatus.subscribed;
         if (error != null && kDebugMode) {
           debugPrint('Profile realtime error: $error');
         }
-        notifyListeners();
+        _safeNotify();
       },
     );
   }
 
   @override
   void dispose() {
+    _disposed = true;
     _profileService.unsubscribe(_channel);
     super.dispose();
   }
@@ -56,14 +68,18 @@ class ProfileProvider extends ChangeNotifier {
   Future<void> loadProfile() async {
     _isLoading = true;
     _errorMessage = null;
-    notifyListeners();
+    _safeNotify();
     try {
-      _profile = await _profileService.fetchProfile(userId);
+      _profile = await _profileService
+          .fetchProfile(userId)
+          .timeout(const Duration(seconds: 15));
+    } on TimeoutException {
+      _errorMessage = 'Profile took too long to load.';
     } catch (error) {
       _errorMessage = error.toString();
     } finally {
       _isLoading = false;
-      notifyListeners();
+      _safeNotify();
     }
   }
 
@@ -72,13 +88,13 @@ class ProfileProvider extends ChangeNotifier {
     final validation = ValidationUtils.validateFullName(sanitized);
     if (validation != null) {
       _errorMessage = validation;
-      notifyListeners();
+      _safeNotify();
       return false;
     }
 
     _isSaving = true;
     _errorMessage = null;
-    notifyListeners();
+    _safeNotify();
     try {
       final current = _profile ??
           UserProfile(id: userId, email: null, displayName: sanitized);
@@ -91,14 +107,14 @@ class ProfileProvider extends ChangeNotifier {
       return false;
     } finally {
       _isSaving = false;
-      notifyListeners();
+      _safeNotify();
     }
   }
 
   Future<bool> uploadAvatar(Uint8List bytes, String fileName) async {
     _isSaving = true;
     _errorMessage = null;
-    notifyListeners();
+    _safeNotify();
     try {
       final url = await _profileService.uploadAvatar(userId, bytes, fileName);
       if (url == null) return false;
@@ -112,7 +128,7 @@ class ProfileProvider extends ChangeNotifier {
       return false;
     } finally {
       _isSaving = false;
-      notifyListeners();
+      _safeNotify();
     }
   }
 }

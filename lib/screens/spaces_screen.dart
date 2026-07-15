@@ -425,19 +425,15 @@ class SpacesScreen extends StatelessWidget {
                                   ),
                                 );
                           if (!context.mounted) return;
+                          final messenger = ScaffoldMessenger.of(context);
+                          final message = ok
+                              ? (existing == null
+                                  ? 'Life Space created'
+                                  : 'Life Space updated')
+                              : (spacesProvider.errorMessage ??
+                                  'Could not save Life Space');
                           Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                ok
-                                    ? (existing == null
-                                        ? 'Life Space created'
-                                        : 'Life Space updated')
-                                    : (spacesProvider.errorMessage ??
-                                        'Could not save Life Space'),
-                              ),
-                            ),
-                          );
+                          messenger.showSnackBar(SnackBar(content: Text(message)));
                         },
                       ),
                     ],
