@@ -138,7 +138,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.spaces TO authenticated;
 GRANT ALL ON public.spaces TO service_role;
 
 COMMENT ON TABLE public.spaces IS
-  'NoteVault Life Spaces — organizer boards (emoji, color, mood, motto, weekly goal, focus)';
+  'NoteVault Life Spaces — organizer boards (emoji, color, mood, motto, weekly goal, focus). Required by Flutter Notes + Life Spaces UI (SpacesProvider).';
 COMMENT ON COLUMN public.spaces.mood IS 'focus | chill | boost | reset';
 COMMENT ON COLUMN public.spaces.weekly_goal IS 'Target notes per week (1-50)';
 COMMENT ON COLUMN public.spaces.is_focus IS 'Today''s Focus Space';

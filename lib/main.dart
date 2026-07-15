@@ -38,8 +38,8 @@ class SmartNotesApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => app_auth.AuthProvider()),
       ],
-      // Keep ONE MaterialApp so navigation (Life Spaces, editor, etc.) is not destroyed
-      // when auth/stream rebuilds — that was causing `_dependents.isEmpty` crashes.
+      // One stable MaterialApp. Session providers live under a nested Navigator
+      // so pushed screens (NoteEditor, Life Spaces, Profile) still see them.
       child: MaterialApp(
         title: 'NoteVault',
         debugShowCheckedModeBanner: false,
@@ -104,7 +104,8 @@ class _AppRoot extends StatelessWidget {
               create: (_) => ProfileProvider(user.id, supabaseReady: true),
             ),
           ],
-          child: const NotesHomeScreen(),
+          // Nested navigator keeps NoteEditor / Spaces / Profile under providers.
+          child: const _AuthenticatedNavigator(),
         );
       },
     );
@@ -117,6 +118,23 @@ class _AppRoot extends StatelessWidget {
       app_auth.AuthLoadingPhase.signingUp => Icons.person_add_alt_1_rounded,
       app_auth.AuthLoadingPhase.none => Icons.lock_rounded,
     };
+  }
+}
+
+/// Hosts app routes under session providers (Notes / Spaces / Profile).
+class _AuthenticatedNavigator extends StatelessWidget {
+  const _AuthenticatedNavigator();
+
+  @override
+  Widget build(BuildContext context) {
+    return Navigator(
+      onGenerateRoute: (settings) {
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => const NotesHomeScreen(),
+        );
+      },
+    );
   }
 }
 

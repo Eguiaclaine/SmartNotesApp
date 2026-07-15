@@ -146,12 +146,15 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
         ),
         actions: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(0, 8, 12, 8),
-            child: CandyButton(
-              label: 'Save',
-              isLoading: _isSaving,
-              expanded: false,
-              onPressed: _isSaving ? null : _save,
+            padding: const EdgeInsets.only(right: 12),
+            child: Center(
+              child: CandyButton(
+                label: _isSaving ? 'Saving…' : 'Save',
+                isLoading: _isSaving,
+                expanded: false,
+                compact: true,
+                onPressed: _isSaving ? null : _save,
+              ),
             ),
           ),
         ],

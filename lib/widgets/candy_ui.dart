@@ -39,6 +39,7 @@ class CandyButton extends StatelessWidget {
     this.icon,
     this.isLoading = false,
     this.expanded = true,
+    this.compact = false,
   });
 
   final String label;
@@ -46,34 +47,44 @@ class CandyButton extends StatelessWidget {
   final IconData? icon;
   final bool isLoading;
   final bool expanded;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final enabled = onPressed != null && !isLoading;
+    final horizontal = compact ? 16.0 : 22.0;
+    final vertical = compact ? 8.0 : 15.0;
+    final fontSize = compact ? 14.0 : 16.0;
+    final radius = compact ? 14.0 : 18.0;
+
     final child = Row(
       mainAxisSize: expanded ? MainAxisSize.max : MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         if (isLoading)
-          const SizedBox(
-            width: 22,
-            height: 22,
-            child: CircularProgressIndicator(
+          SizedBox(
+            width: compact ? 18 : 22,
+            height: compact ? 18 : 22,
+            child: const CircularProgressIndicator(
               strokeWidth: 2.4,
               color: Colors.white,
             ),
           )
         else ...[
           if (icon != null) ...[
-            Icon(icon, size: 20, color: Colors.white),
-            const SizedBox(width: 8),
+            Icon(icon, size: compact ? 18 : 20, color: Colors.white),
+            SizedBox(width: compact ? 6 : 8),
           ],
           Text(
             label,
+            maxLines: 1,
+            softWrap: false,
+            overflow: TextOverflow.visible,
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w800,
-                  fontSize: 16,
+                  fontSize: fontSize,
+                  height: 1.1,
                 ),
           ),
         ],
@@ -85,7 +96,7 @@ class CandyButton extends StatelessWidget {
       opacity: enabled ? 1 : 0.55,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(radius),
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -96,7 +107,7 @@ class CandyButton extends StatelessWidget {
                     AppColors.candyRose.withValues(alpha: 0.45),
                   ],
           ),
-          boxShadow: enabled
+          boxShadow: enabled && !compact
               ? [
                   BoxShadow(
                     color: AppColors.candyRose.withValues(alpha: 0.35),
@@ -110,9 +121,12 @@ class CandyButton extends StatelessWidget {
           color: Colors.transparent,
           child: InkWell(
             onTap: enabled ? onPressed : null,
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(radius),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 15),
+              padding: EdgeInsets.symmetric(
+                horizontal: horizontal,
+                vertical: vertical,
+              ),
               child: child,
             ),
           ),
