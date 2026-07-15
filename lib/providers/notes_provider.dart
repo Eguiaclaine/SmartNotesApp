@@ -69,6 +69,17 @@ class NotesProvider extends ChangeNotifier {
   int notesInSpace(String spaceId) =>
       activeNotes.where((note) => note.spaceId == spaceId).length;
 
+  /// Active notes created in this space during the current calendar week.
+  int notesInSpaceThisWeek(String spaceId) {
+    final now = DateTime.now();
+    final startOfWeek = DateTime(now.year, now.month, now.day)
+        .subtract(Duration(days: now.weekday - 1));
+    return activeNotes.where((note) {
+      if (note.spaceId != spaceId) return false;
+      return !note.createdAt.isBefore(startOfWeek);
+    }).length;
+  }
+
   void setSearchQuery(String value) {
     _searchQuery = value;
     notifyListeners();
@@ -177,6 +188,7 @@ class NotesProvider extends ChangeNotifier {
         await _notesService.updateNote(note);
       }
       _notes = _notes.map((item) => item.id == note.id ? note : item).toList();
+      _errorMessage = null;
       await _persistLocal();
       await _syncNoteReminder(note);
       return true;

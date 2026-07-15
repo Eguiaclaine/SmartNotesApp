@@ -252,7 +252,7 @@ class AuthProvider extends ChangeNotifier {
 
         'email_address_invalid' => 'Enter a valid email address.',
 
-        'weak_password' => 'Password is too weak. Use at least 8 characters with mixed case, numbers, and symbols.',
+        'weak_password' => 'Password must be at least 6 characters.',
 
         'user_already_exists' => 'An account with this email already exists.',
 

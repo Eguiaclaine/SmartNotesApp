@@ -13,6 +13,7 @@ import 'package:application/services/notification_service.dart';
 import 'package:application/services/supabase_service.dart';
 import 'package:application/theme/app_theme.dart';
 import 'package:application/widgets/app_loading_screen.dart';
+import 'package:application/widgets/candy_ui.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -134,33 +135,43 @@ class _BackendUnavailableScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.cloud_off_rounded, size: 56, color: scheme.error),
-                  const SizedBox(height: 20),
-                  Text(
-                    'Backend not configured',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Copy .env.example to .env and set SUPABASE_URL and SUPABASE_ANON_KEY, then restart the app.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+      body: CandyBody(
+        child: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(22),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: scheme.error.withValues(alpha: 0.1),
+                      ),
+                      child: Icon(Icons.cloud_off_rounded, size: 48, color: scheme.error),
+                    ),
+                    const SizedBox(height: 22),
+                    Text(
+                      'Backend not configured',
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Copy .env.example to .env and set SUPABASE_URL and SUPABASE_ANON_KEY, then restart the app.',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                            height: 1.45,
+                          ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

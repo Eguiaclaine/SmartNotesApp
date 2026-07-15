@@ -55,6 +55,18 @@ class Note {
         'color_tag': colorTag,
       };
 
+  /// Payload for UPDATE — does not rewrite id/user_id/created_at.
+  Map<String, dynamic> toSupabaseUpdate() => {
+        'title': title,
+        'content': content,
+        'reminder_at': reminderAt?.toIso8601String(),
+        'updated_at': (updatedAt ?? DateTime.now()).toIso8601String(),
+        'space_id': spaceId,
+        'is_archived': isArchived,
+        'archived_at': archivedAt?.toIso8601String(),
+        'color_tag': colorTag,
+      };
+
   factory Note.fromJson(Map<String, dynamic> json) => Note(
         id: json['id'] as String,
         userId: json['userId'] as String,

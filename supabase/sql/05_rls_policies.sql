@@ -42,7 +42,8 @@ DROP POLICY IF EXISTS "Users can update own notes" ON public.notes;
 CREATE POLICY "Users can update own notes"
   ON public.notes
   FOR UPDATE
-  USING (auth.uid() = user_id);
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
 
 DROP POLICY IF EXISTS "Users can delete own notes" ON public.notes;
 CREATE POLICY "Users can delete own notes"

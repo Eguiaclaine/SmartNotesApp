@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
+import '../theme/app_theme.dart';
 import '../utils/validation_utils.dart';
-import '../widgets/password_requirements.dart';
+import '../widgets/candy_ui.dart';
 
 class AuthForm extends StatefulWidget {
   const AuthForm({
@@ -12,12 +13,14 @@ class AuthForm extends StatefulWidget {
     required this.onToggleMode,
     this.onRegisterSuccess,
     this.initialEmail,
+    this.showModeToggle = true,
   });
 
   final bool isLogin;
   final VoidCallback onToggleMode;
   final void Function(String email)? onRegisterSuccess;
   final String? initialEmail;
+  final bool showModeToggle;
 
   @override
   State<AuthForm> createState() => _AuthFormState();
@@ -72,20 +75,24 @@ class _AuthFormState extends State<AuthForm> {
         children: [
           if (widget.isLogin && authProvider.successMessage != null) ...[
             Container(
-              padding: const EdgeInsets.all(12),
-              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(14),
+              margin: const EdgeInsets.only(bottom: 14),
               decoration: BoxDecoration(
-                color: scheme.primaryContainer.withValues(alpha: 0.45),
-                borderRadius: BorderRadius.circular(12),
+                color: AppColors.candyBlush.withValues(alpha: 0.75),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: scheme.primary.withValues(alpha: 0.2)),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.check_circle_outline, color: scheme.primary, size: 20),
-                  const SizedBox(width: 8),
+                  Icon(Icons.check_circle_rounded, color: scheme.primary, size: 22),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       authProvider.successMessage!,
-                      style: TextStyle(color: scheme.onPrimaryContainer),
+                      style: TextStyle(
+                        color: scheme.onSurface,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
@@ -94,62 +101,78 @@ class _AuthFormState extends State<AuthForm> {
           ],
           if (authProvider.errorMessage != null) ...[
             Container(
-              padding: const EdgeInsets.all(12),
-              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(14),
+              margin: const EdgeInsets.only(bottom: 14),
               decoration: BoxDecoration(
-                color: scheme.errorContainer.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(12),
+                color: scheme.errorContainer.withValues(alpha: 0.55),
+                borderRadius: BorderRadius.circular(16),
               ),
-              child: Text(authProvider.errorMessage!),
+              child: Row(
+                children: [
+                  Icon(Icons.error_outline_rounded, color: scheme.error, size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(child: Text(authProvider.errorMessage!)),
+                ],
+              ),
             ),
           ],
           if (!widget.isLogin) ...[
             TextFormField(
               controller: _fullNameController,
-              decoration: const InputDecoration(labelText: 'Full Name'),
+              decoration: const InputDecoration(
+                labelText: 'Full Name',
+                prefixIcon: Icon(Icons.person_outline_rounded),
+              ),
               textInputAction: TextInputAction.next,
               validator: ValidationUtils.validateFullName,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
           ],
           TextFormField(
             controller: _emailController,
-            decoration: const InputDecoration(labelText: 'Email'),
+            decoration: const InputDecoration(
+              labelText: 'Email',
+              prefixIcon: Icon(Icons.mail_outline_rounded),
+            ),
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
             validator: ValidationUtils.validateEmail,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           TextFormField(
             controller: _passwordController,
             decoration: InputDecoration(
               labelText: 'Password',
+              hintText: widget.isLogin ? null : 'At least 6 characters',
+              prefixIcon: const Icon(Icons.lock_outline_rounded),
               suffixIcon: IconButton(
                 onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                 icon: Icon(
-                  _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  _obscurePassword
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
                 ),
               ),
             ),
             obscureText: _obscurePassword,
-            onChanged: (_) => setState(() {}),
             validator: (value) => ValidationUtils.validatePassword(
               value,
               forSignUp: !widget.isLogin,
             ),
           ),
           if (!widget.isLogin) ...[
-            const SizedBox(height: 12),
-            PasswordRequirementsList(password: _passwordController.text),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             TextFormField(
               controller: _confirmPasswordController,
               decoration: InputDecoration(
                 labelText: 'Confirm Password',
+                prefixIcon: const Icon(Icons.lock_person_outlined),
                 suffixIcon: IconButton(
                   onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
                   icon: Icon(
-                    _obscureConfirm ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                    _obscureConfirm
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
                   ),
                 ),
               ),
@@ -160,26 +183,24 @@ class _AuthFormState extends State<AuthForm> {
               ),
             ),
           ],
-          const SizedBox(height: 20),
-          FilledButton(
+          const SizedBox(height: 24),
+          CandyButton(
+            label: widget.isLogin ? 'Enter NoteVault' : 'Create my vault',
+            icon: widget.isLogin ? Icons.arrow_forward_rounded : Icons.auto_awesome_rounded,
+            isLoading: authProvider.isLoading,
             onPressed: authProvider.isLoading ? null : _submit,
-            child: authProvider.isLoading
-                ? const SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(strokeWidth: 2.5),
-                  )
-                : Text(widget.isLogin ? 'Sign In' : 'Register'),
           ),
-          const SizedBox(height: 8),
-          TextButton(
-            onPressed: widget.onToggleMode,
-            child: Text(
-              widget.isLogin
-                  ? 'Create an account'
-                  : 'Already have an account? Sign in',
+          if (widget.showModeToggle) ...[
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: widget.onToggleMode,
+              child: Text(
+                widget.isLogin
+                    ? 'New here? Create an account'
+                    : 'Already have an account? Sign in',
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );

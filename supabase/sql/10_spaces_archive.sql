@@ -47,7 +47,9 @@ CREATE POLICY "Users can insert own spaces"
 
 DROP POLICY IF EXISTS "Users can update own spaces" ON public.spaces;
 CREATE POLICY "Users can update own spaces"
-  ON public.spaces FOR UPDATE USING (auth.uid() = user_id);
+  ON public.spaces FOR UPDATE
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
 
 DROP POLICY IF EXISTS "Users can delete own spaces" ON public.spaces;
 CREATE POLICY "Users can delete own spaces"

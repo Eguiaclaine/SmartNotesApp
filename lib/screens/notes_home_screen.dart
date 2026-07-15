@@ -4,11 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/note.dart';
+import '../models/space.dart';
 import '../providers/notes_provider.dart';
 import '../providers/profile_provider.dart';
 import '../providers/spaces_provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
+import '../widgets/candy_ui.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/note_card.dart';
 import '../widgets/page_container.dart';
@@ -63,9 +65,12 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> with WidgetsBindingOb
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'NoteVault',
-              style: TextStyle(fontWeight: FontWeight.w800),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: AppColors.candyRose,
+                    fontWeight: FontWeight.w800,
+                  ),
             ),
             Text(
               notesProvider.showArchivedOnly
@@ -75,67 +80,62 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> with WidgetsBindingOb
                       : 'Your candy note space'),
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
                     color: scheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
                   ),
             ),
           ],
         ),
         actions: [
           if (notesProvider.isRealtimeConnected)
-            const Padding(
-              padding: EdgeInsets.only(right: 4),
-              child: Icon(Icons.cloud_done_rounded, size: 18, color: Color(0xFF4CAF50)),
+            Padding(
+              padding: const EdgeInsets.only(right: 4),
+              child: Icon(
+                Icons.cloud_done_rounded,
+                size: 18,
+                color: Colors.green.shade500,
+              ),
             ),
-          IconButton(
+          CandyIconButton(
+            icon: Icons.auto_awesome_rounded,
+            tooltip: 'Life Spaces',
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const SpacesScreen()),
             ),
-            icon: const Icon(Icons.auto_awesome_rounded),
-            tooltip: 'Life Spaces',
           ),
-          IconButton(
+          CandyIconButton(
+            icon: notesProvider.showArchivedOnly
+                ? Icons.inventory_2_rounded
+                : Icons.inventory_2_outlined,
+            tooltip: notesProvider.showArchivedOnly ? 'Show active notes' : 'Archive',
+            selected: notesProvider.showArchivedOnly,
             onPressed: () {
               notesProvider.setShowArchivedOnly(!notesProvider.showArchivedOnly);
               if (notesProvider.showArchivedOnly) {
                 notesProvider.setFilterSpaceId(null);
               }
             },
-            icon: Icon(
-              notesProvider.showArchivedOnly
-                  ? Icons.inventory_2_rounded
-                  : Icons.inventory_2_outlined,
-            ),
-            tooltip: notesProvider.showArchivedOnly ? 'Show active notes' : 'Archive',
           ),
-          IconButton(
+          CandyIconButton(
+            icon: Icons.person_outline_rounded,
+            tooltip: 'Profile',
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const ProfileScreen()),
             ),
-            icon: const Icon(Icons.person_outline_rounded),
-            tooltip: 'Profile',
           ),
-          IconButton(
+          CandyIconButton(
+            icon: Icons.settings_outlined,
+            tooltip: 'Settings',
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const SettingsScreen()),
             ),
-            icon: const Icon(Icons.settings_outlined),
-            tooltip: 'Settings',
           ),
+          const SizedBox(width: 6),
         ],
       ),
-      body: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppColors.candyBlush.withValues(alpha: 0.55),
-              Theme.of(context).scaffoldBackgroundColor,
-            ],
-          ),
-        ),
+      body: CandyBody(
         child: notesProvider.isLoading
             ? const Center(child: CircularProgressIndicator())
             : notesProvider.errorMessage != null
@@ -143,10 +143,11 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> with WidgetsBindingOb
                     icon: Icons.cloud_off_rounded,
                     title: 'Something went wrong',
                     subtitle: notesProvider.errorMessage!,
-                    action: FilledButton.icon(
+                    action: CandyButton(
+                      label: 'Try again',
+                      icon: Icons.refresh_rounded,
+                      expanded: false,
                       onPressed: () => context.read<NotesProvider>().reload(),
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Try again'),
                     ),
                   )
                 : Column(
@@ -158,7 +159,10 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> with WidgetsBindingOb
                           onChanged: notesProvider.setSearchQuery,
                           decoration: InputDecoration(
                             hintText: 'Search notes...',
-                            prefixIcon: const Icon(Icons.search_rounded),
+                            prefixIcon: Icon(
+                              Icons.search_rounded,
+                              color: scheme.primary,
+                            ),
                             suffixIcon: notesProvider.searchQuery.isEmpty
                                 ? null
                                 : IconButton(
@@ -172,7 +176,19 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> with WidgetsBindingOb
                         ),
                       ),
                       if (spacesProvider.spaces.isNotEmpty &&
-                          !notesProvider.showArchivedOnly)
+                          !notesProvider.showArchivedOnly) ...[
+                        if (spacesProvider.focusSpace != null)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                            child: _HomeFocusStrip(
+                              space: spacesProvider.focusSpace!,
+                              weekCount: notesProvider.notesInSpaceThisWeek(
+                                spacesProvider.focusSpace!.id,
+                              ),
+                              onTap: () => notesProvider
+                                  .setFilterSpaceId(spacesProvider.focusSpace!.id),
+                            ),
+                          ),
                         SizedBox(
                           height: 48,
                           child: ListView(
@@ -191,6 +207,9 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> with WidgetsBindingOb
                                 (space) => Padding(
                                   padding: const EdgeInsets.symmetric(horizontal: 4),
                                   child: FilterChip(
+                                    avatar: space.isFocus
+                                        ? const Icon(Icons.star_rounded, size: 16)
+                                        : null,
                                     label: Text('${space.emoji} ${space.name}'),
                                     selected: notesProvider.filterSpaceId == space.id,
                                     onSelected: (_) =>
@@ -201,6 +220,7 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> with WidgetsBindingOb
                             ],
                           ),
                         ),
+                      ],
                       Expanded(
                         child: visible.isEmpty
                             ? EmptyState(
@@ -217,10 +237,11 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> with WidgetsBindingOb
                                     : 'Create a note, or organize with Life Spaces.',
                                 action: notesProvider.showArchivedOnly
                                     ? null
-                                    : FilledButton.icon(
+                                    : CandyButton(
+                                        label: 'New Note',
+                                        icon: Icons.add_rounded,
+                                        expanded: false,
                                         onPressed: () => _openEditor(context),
-                                        icon: const Icon(Icons.add),
-                                        label: const Text('New Note'),
                                       ),
                               )
                             : LayoutBuilder(
@@ -232,9 +253,9 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> with WidgetsBindingOb
                                       gridDelegate:
                                           SliverGridDelegateWithFixedCrossAxisCount(
                                         crossAxisCount: columns,
-                                        childAspectRatio: columns == 1 ? 1.35 : 1.2,
-                                        crossAxisSpacing: 14,
-                                        mainAxisSpacing: 14,
+                                        childAspectRatio: columns == 1 ? 1.32 : 1.18,
+                                        crossAxisSpacing: 16,
+                                        mainAxisSpacing: 16,
                                       ),
                                       itemCount: visible.length,
                                       itemBuilder: (context, index) {
@@ -262,8 +283,10 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> with WidgetsBindingOb
           ? null
           : FloatingActionButton.extended(
               onPressed: () => _openEditor(context),
-              icon: const Icon(Icons.add),
+              icon: const Icon(Icons.add_rounded),
               label: const Text('New Note'),
+              backgroundColor: AppColors.candyRose,
+              foregroundColor: Colors.white,
             ),
     );
   }
@@ -325,6 +348,79 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> with WidgetsBindingOb
       base.top,
       math.max(base.right, inset),
       base.bottom,
+    );
+  }
+}
+
+class _HomeFocusStrip extends StatelessWidget {
+  const _HomeFocusStrip({
+    required this.space,
+    required this.weekCount,
+    required this.onTap,
+  });
+
+  final Space space;
+  final int weekCount;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = AppColors.parseHex(space.colorHex);
+    final progress = (weekCount / space.weeklyGoal).clamp(0.0, 1.0);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Ink(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              colors: [
+                color.withValues(alpha: 0.28),
+                AppColors.candyBlush.withValues(alpha: 0.7),
+              ],
+            ),
+            border: Border.all(color: color.withValues(alpha: 0.35)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(space.emoji, style: const TextStyle(fontSize: 18)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Today’s Focus · ${space.name}',
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                  Text(
+                    '$weekCount/${space.weeklyGoal}',
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 6,
+                  backgroundColor: Colors.white.withValues(alpha: 0.55),
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

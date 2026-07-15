@@ -7,6 +7,8 @@
 --   2. Turn ON  "Enable Email provider"
 --   3. Turn ON  "Enable sign ups"
 --   4. (Dev) Turn OFF "Confirm email" for instant login after register
+--   5. Password policy: minimum length 6 only — NO uppercase / number / symbol rules
+--      (matches NoteVault app validation; see 12_password_policy.sql)
 --
 -- App auth flow: register creates auth.users + profiles row via trigger,
 -- then signs the user OUT and shows the login screen (no auto-dashboard).

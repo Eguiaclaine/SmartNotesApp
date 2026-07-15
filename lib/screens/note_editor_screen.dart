@@ -9,6 +9,7 @@ import '../services/notification_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/date_format.dart';
 import '../utils/validation_utils.dart';
+import '../widgets/candy_ui.dart';
 import '../widgets/page_container.dart';
 
 class NoteEditorScreen extends StatefulWidget {
@@ -85,11 +86,15 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     if (_isSaving || !_formKey.currentState!.validate()) return;
 
     final reminderAt = _reminderEnabled ? _reminderAt : null;
-    if (_reminderEnabled) {
-      final reminderError = ValidationUtils.validateReminder(reminderAt);
-      if (reminderError != null) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(reminderError)));
-        return;
+    if (_reminderEnabled && reminderAt != null) {
+      final unchanged = widget.note?.reminderAt != null &&
+          widget.note!.reminderAt!.isAtSameMomentAs(reminderAt);
+      if (!unchanged) {
+        final reminderError = ValidationUtils.validateReminder(reminderAt);
+        if (reminderError != null) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(reminderError)));
+          return;
+        }
       }
     }
 
@@ -134,33 +139,26 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.note == null ? 'New Note' : 'Edit Note'),
+        leading: CandyIconButton(
+          icon: Icons.arrow_back_rounded,
+          tooltip: 'Back',
+          onPressed: () => Navigator.pop(context),
+        ),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: FilledButton(
+            padding: const EdgeInsets.fromLTRB(0, 8, 12, 8),
+            child: CandyButton(
+              label: 'Save',
+              isLoading: _isSaving,
+              expanded: false,
               onPressed: _isSaving ? null : _save,
-              child: _isSaving
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Save'),
             ),
           ),
         ],
       ),
-      body: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topRight,
-            end: Alignment.bottomLeft,
-            colors: [
-              AppColors.candyBlush.withValues(alpha: 0.4),
-              Theme.of(context).scaffoldBackgroundColor,
-            ],
-          ),
-        ),
+      body: CandyBody(
+        begin: Alignment.topRight,
+        end: Alignment.bottomLeft,
         child: PageContainer(
           child: Form(
             key: _formKey,
@@ -170,6 +168,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                   controller: _titleController,
                   decoration: InputDecoration(
                     labelText: 'Title',
+                    prefixIcon: const Icon(Icons.title_rounded),
                     counterText: '${_titleController.text.length} / 100',
                   ),
                   maxLength: 100,
@@ -187,19 +186,15 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                   maxLength: 5000,
                   validator: ValidationUtils.validateContent,
                 ),
-                const SizedBox(height: 20),
-                Text(
-                  'Life Space',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 22),
+                const SectionLabel('Life Space'),
+                const SizedBox(height: 10),
                 DropdownButtonFormField<String?>(
                   key: ValueKey('space-$_spaceId'),
                   initialValue: _spaceId,
                   decoration: const InputDecoration(
                     labelText: 'Organize into a space',
+                    prefixIcon: Icon(Icons.auto_awesome_rounded),
                   ),
                   items: [
                     const DropdownMenuItem<String?>(
@@ -215,14 +210,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                   ],
                   onChanged: (value) => setState(() => _spaceId = value),
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  'Candy tag color',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 20),
+                const SectionLabel('Candy tag color'),
+                const SizedBox(height: 10),
                 Wrap(
                   spacing: 10,
                   runSpacing: 10,
@@ -234,53 +224,77 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                     ),
                     ...AppColors.spacePalette.map((color) {
                       final hex = AppColors.toHex(color);
+                      final selected = _colorTag == hex;
                       return GestureDetector(
                         onTap: () => setState(() => _colorTag = hex),
-                        child: Container(
-                          width: 32,
-                          height: 32,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          width: 34,
+                          height: 34,
                           decoration: BoxDecoration(
                             color: color,
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: _colorTag == hex ? scheme.onSurface : Colors.transparent,
-                              width: 2.5,
+                              color: selected ? Colors.white : Colors.transparent,
+                              width: 3,
                             ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: color.withValues(alpha: selected ? 0.5 : 0.25),
+                                blurRadius: selected ? 10 : 4,
+                              ),
+                            ],
                           ),
                         ),
                       );
                     }),
                   ],
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 22),
+                const SectionLabel('Reminder'),
+                const SizedBox(height: 10),
                 if (_reminderEnabled && _reminderAt != null)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     decoration: BoxDecoration(
-                      color: scheme.primaryContainer.withValues(alpha: 0.45),
-                      borderRadius: BorderRadius.circular(24),
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.candyBlush.withValues(alpha: 0.8),
+                          scheme.primary.withValues(alpha: 0.1),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: scheme.primary.withValues(alpha: 0.2),
+                      ),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.notifications_active_rounded, color: scheme.primary, size: 20),
-                        const SizedBox(width: 8),
+                        Icon(
+                          Icons.notifications_active_rounded,
+                          color: scheme.primary,
+                          size: 22,
+                        ),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            'Reminder: ${formatNoteDateTime(_reminderAt!)}',
-                            style: Theme.of(context).textTheme.bodyMedium,
+                            formatNoteDateTime(_reminderAt!),
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                const SizedBox(height: 8),
                 OutlinedButton.icon(
                   onPressed: _isSaving ? null : _pickReminder,
                   icon: const Icon(Icons.notifications_none_rounded),
                   label: Text(_reminderEnabled ? 'Change Reminder' : 'Set Reminder'),
                 ),
                 if (_reminderEnabled) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
                   TextButton(
                     onPressed: _isSaving
                         ? null
@@ -291,6 +305,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                     child: const Text('Remove Reminder'),
                   ),
                 ],
+                const SizedBox(height: 24),
               ],
             ),
           ),

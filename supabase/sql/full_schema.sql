@@ -11,6 +11,8 @@
 --
 -- BEFORE running: enable Email sign-ups in Supabase Dashboard
 --   Authentication → Providers → Email → Enable sign ups
+-- Password policy (see also 12_password_policy.sql):
+--   Minimum length 6 only — NO uppercase / number / special-character format
 --
 -- After register: profile row is created by handle_new_user trigger;
 -- app signs user out and shows login (no auto-redirect to dashboard).
@@ -98,11 +100,22 @@ CREATE TABLE IF NOT EXISTS public.spaces (
   ),
   emoji TEXT NOT NULL DEFAULT '💗',
   color_hex TEXT NOT NULL DEFAULT '#FF8FB8',
+  motto TEXT,
+  mood TEXT NOT NULL DEFAULT 'focus',
+  weekly_goal INTEGER NOT NULL DEFAULT 5,
+  is_focus BOOLEAN NOT NULL DEFAULT FALSE,
+  sort_order INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 COMMENT ON TABLE public.spaces IS 'NoteVault Life Spaces — unique organizer boards for notes';
+
+ALTER TABLE public.spaces ADD COLUMN IF NOT EXISTS motto TEXT;
+ALTER TABLE public.spaces ADD COLUMN IF NOT EXISTS mood TEXT NOT NULL DEFAULT 'focus';
+ALTER TABLE public.spaces ADD COLUMN IF NOT EXISTS weekly_goal INTEGER NOT NULL DEFAULT 5;
+ALTER TABLE public.spaces ADD COLUMN IF NOT EXISTS is_focus BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE public.spaces ADD COLUMN IF NOT EXISTS sort_order INTEGER NOT NULL DEFAULT 0;
 
 ALTER TABLE public.notes
   ADD COLUMN IF NOT EXISTS is_archived BOOLEAN NOT NULL DEFAULT FALSE;
@@ -167,7 +180,9 @@ CREATE POLICY "Users can insert own notes"
 
 DROP POLICY IF EXISTS "Users can update own notes" ON public.notes;
 CREATE POLICY "Users can update own notes"
-  ON public.notes FOR UPDATE USING (auth.uid() = user_id);
+  ON public.notes FOR UPDATE
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
 
 DROP POLICY IF EXISTS "Users can delete own notes" ON public.notes;
 CREATE POLICY "Users can delete own notes"
@@ -183,7 +198,9 @@ CREATE POLICY "Users can insert own spaces"
 
 DROP POLICY IF EXISTS "Users can update own spaces" ON public.spaces;
 CREATE POLICY "Users can update own spaces"
-  ON public.spaces FOR UPDATE USING (auth.uid() = user_id);
+  ON public.spaces FOR UPDATE
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
 
 DROP POLICY IF EXISTS "Users can delete own spaces" ON public.spaces;
 CREATE POLICY "Users can delete own spaces"
@@ -260,9 +277,19 @@ RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
 BEGIN
-  IF NEW.reminder_at IS NOT NULL AND NEW.reminder_at <= NOW() THEN
+  IF NEW.reminder_at IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  IF TG_OP = 'UPDATE'
+     AND NEW.reminder_at IS NOT DISTINCT FROM OLD.reminder_at THEN
+    RETURN NEW;
+  END IF;
+
+  IF NEW.reminder_at <= NOW() THEN
     RAISE EXCEPTION 'Reminder must be in the future when set';
   END IF;
+
   RETURN NEW;
 END;
 $$;
@@ -378,7 +405,8 @@ GRANT ALL ON public.notes TO service_role;
 GRANT ALL ON public.spaces TO service_role;
 
 COMMENT ON FUNCTION public.sync_auth_users_to_profiles IS
-  'Backfill or update profiles from auth.users after sign-up is enabled';
+  'Backfill profiles from auth.users. NoteVault passwords: min 6 chars, no complexity format required.';
 
 -- After first users register, run:
 -- SELECT public.sync_auth_users_to_profiles();
+-- Password policy notes: supabase/sql/12_password_policy.sql

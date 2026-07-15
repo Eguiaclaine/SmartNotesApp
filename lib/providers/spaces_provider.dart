@@ -24,9 +24,26 @@ class SpacesProvider extends ChangeNotifier {
   bool _isLoading = true;
   String? _errorMessage;
 
-  List<Space> get spaces => _spaces;
+  List<Space> get spaces {
+    final sorted = [..._spaces]
+      ..sort((a, b) {
+        if (a.isFocus != b.isFocus) return a.isFocus ? -1 : 1;
+        final byOrder = a.sortOrder.compareTo(b.sortOrder);
+        if (byOrder != 0) return byOrder;
+        return a.createdAt.compareTo(b.createdAt);
+      });
+    return sorted;
+  }
+
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+
+  Space? get focusSpace {
+    for (final space in _spaces) {
+      if (space.isFocus) return space;
+    }
+    return null;
+  }
 
   Space? spaceById(String? id) {
     if (id == null) return null;
@@ -80,7 +97,7 @@ class SpacesProvider extends ChangeNotifier {
         await _storageService.saveSpaces(_spaces);
       }
     } catch (error) {
-      _errorMessage = error.toString();
+      _errorMessage = _friendlyError(error);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -91,6 +108,10 @@ class SpacesProvider extends ChangeNotifier {
     required String name,
     required String emoji,
     required String colorHex,
+    String? motto,
+    SpaceMood mood = SpaceMood.focus,
+    int weeklyGoal = 5,
+    bool isFocus = false,
   }) async {
     final space = Space(
       id: const Uuid().v4(),
@@ -98,40 +119,97 @@ class SpacesProvider extends ChangeNotifier {
       name: name.trim(),
       emoji: emoji,
       colorHex: colorHex,
+      motto: motto?.trim().isEmpty == true ? null : motto?.trim(),
+      mood: mood,
+      weeklyGoal: weeklyGoal.clamp(1, 50),
+      isFocus: isFocus,
+      sortOrder: _spaces.length,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );
 
     try {
+      var nextSpaces = [..._spaces, space];
+      if (isFocus) {
+        nextSpaces = nextSpaces
+            .map((item) => item.id == space.id ? item : item.copyWith(isFocus: false))
+            .toList();
+      }
+
       if (supabaseReady) {
+        if (isFocus) {
+          for (final item in _spaces.where((s) => s.isFocus)) {
+            await _spacesService.updateSpace(item.copyWith(isFocus: false));
+          }
+        }
         await _spacesService.createSpace(space);
       }
-      _spaces = [..._spaces, space];
+
+      _spaces = nextSpaces;
       await _storageService.saveSpaces(_spaces);
+      _errorMessage = null;
       notifyListeners();
       return true;
     } catch (error) {
-      _errorMessage = error.toString();
+      _errorMessage = _friendlyError(error);
       notifyListeners();
       return false;
     }
   }
 
+  Future<bool> addFromTemplate(SpaceTemplate template) {
+    return addSpace(
+      name: template.name,
+      emoji: template.emoji,
+      colorHex: template.colorHex,
+      motto: template.motto,
+      mood: template.mood,
+      weeklyGoal: template.weeklyGoal,
+    );
+  }
+
   Future<bool> updateSpace(Space space) async {
     try {
       final updated = space.copyWith(updatedAt: DateTime.now());
+      var nextSpaces = _spaces.map((item) => item.id == updated.id ? updated : item).toList();
+
+      if (updated.isFocus) {
+        nextSpaces = nextSpaces
+            .map((item) => item.id == updated.id ? item : item.copyWith(isFocus: false))
+            .toList();
+      }
+
       if (supabaseReady) {
+        if (updated.isFocus) {
+          for (final item in _spaces.where((s) => s.isFocus && s.id != updated.id)) {
+            await _spacesService.updateSpace(item.copyWith(isFocus: false));
+          }
+        }
         await _spacesService.updateSpace(updated);
       }
-      _spaces = _spaces.map((item) => item.id == updated.id ? updated : item).toList();
+
+      _spaces = nextSpaces;
       await _storageService.saveSpaces(_spaces);
+      _errorMessage = null;
       notifyListeners();
       return true;
     } catch (error) {
-      _errorMessage = error.toString();
+      _errorMessage = _friendlyError(error);
       notifyListeners();
       return false;
     }
+  }
+
+  Future<bool> setFocusSpace(String id) async {
+    final target = spaceById(id);
+    if (target == null) return false;
+    return updateSpace(target.copyWith(isFocus: true));
+  }
+
+  Future<bool> clearFocusSpace(String id) async {
+    final target = spaceById(id);
+    if (target == null) return false;
+    return updateSpace(target.copyWith(isFocus: false));
   }
 
   Future<bool> deleteSpace(String id) async {
@@ -141,12 +219,36 @@ class SpacesProvider extends ChangeNotifier {
       }
       _spaces.removeWhere((space) => space.id == id);
       await _storageService.saveSpaces(_spaces);
+      _errorMessage = null;
       notifyListeners();
       return true;
     } catch (error) {
-      _errorMessage = error.toString();
+      _errorMessage = _friendlyError(error);
       notifyListeners();
       return false;
     }
+  }
+
+  String _friendlyError(Object error) {
+    final message = error.toString();
+    if ((message.contains('relation') && message.contains('spaces')) ||
+        message.contains('Could not find the table') ||
+        message.contains('PGRST205')) {
+      return 'Life Spaces table missing. Run supabase/sql/14_life_spaces_align.sql in Supabase SQL Editor.';
+    }
+    if (message.contains('motto') ||
+        message.contains('weekly_goal') ||
+        message.contains('is_focus') ||
+        message.contains('sort_order') ||
+        message.contains('mood') ||
+        message.contains('column') ||
+        message.contains('PGRST204') ||
+        message.contains('schema cache')) {
+      return 'Life Spaces schema outdated. Run supabase/sql/14_life_spaces_align.sql in Supabase SQL Editor.';
+    }
+    if (message.contains('violates check constraint')) {
+      return 'Check space name (1–40 chars), mood, and weekly goal (1–50).';
+    }
+    return message.replaceFirst('Exception: ', '');
   }
 }

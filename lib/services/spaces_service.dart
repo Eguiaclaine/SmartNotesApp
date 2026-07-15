@@ -54,13 +54,37 @@ class SpacesService {
   Future<void> createSpace(Space space) async {
     final client = _client;
     if (client == null) return;
-    await client.from(_table).insert(space.toSupabase());
+
+    final response = await client
+        .from(_table)
+        .insert(space.toSupabase())
+        .select()
+        .maybeSingle();
+
+    if (response == null) {
+      throw Exception(
+        'Life Space create failed. Run supabase/sql/14_life_spaces_align.sql in Supabase.',
+      );
+    }
   }
 
   Future<void> updateSpace(Space space) async {
     final client = _client;
     if (client == null) return;
-    await client.from(_table).update(space.toSupabase()).eq('id', space.id);
+
+    final response = await client
+        .from(_table)
+        .update(space.toSupabaseUpdate())
+        .eq('id', space.id)
+        .eq('user_id', space.userId)
+        .select()
+        .maybeSingle();
+
+    if (response == null) {
+      throw Exception(
+        'Life Space update failed. Run supabase/sql/14_life_spaces_align.sql in Supabase.',
+      );
+    }
   }
 
   Future<void> deleteSpace(String id) async {

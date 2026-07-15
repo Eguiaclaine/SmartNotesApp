@@ -1,145 +1,165 @@
-# 6. Video Demonstration (3–5 Minutes)
+# Video Demonstration Script — NoteVault
 
-**Project:** NoteVault App  
+**Requirement:** Item 6 — Video Demonstration (3–5 minutes)  
+**Project:** NoteVault  
 **Submitted by:** Ronar D. Morales  
 **Course:** CC106 — Bachelor of Science in Information System  
-**Platform:** Android APK / Chrome (web)
+**How to record:** Run the app on a simulator, emulator, physical device, or Chrome. Narrate while you demonstrate the **user flow** and **system functionality**.
 
 ---
 
-## What to Show
+## Timing Overview (~4:30)
 
-Record the app running on a **physical Android phone** or **emulator/simulator** (or Chrome for web). Speak naturally while you tap through each screen — like you are explaining the app to your instructor.
-
-**Total time:** about 3 to 5 minutes.
-
----
-
-## Video Script (Narration Guide)
-
-### Opening — App intro (0:00 – 0:30)
-
-> “Good day. For my CC106 Final Project, I will demonstrate **NoteVault** — a candy-pink note-taking app I built with **Flutter** and **Supabase**, including Life Spaces organizer and Archive.
->
-> If you are watching on Android, you can see our custom app icon on the home screen. When I open the app, it loads with a short splash screen, then takes me to the login page.”
-
-**On screen:** Open the app → show launcher icon (Android) → login screen.
-
-**Technical point:** Flutter app, Supabase initialization, Material 3 UI.
+| Time | Section | System functionality |
+|------|---------|----------------------|
+| 0:00 – 0:25 | Opening | Flutter app + Supabase overview |
+| 0:25 – 1:00 | Sign up | Authentication + validation |
+| 1:00 – 1:25 | Login | Session + Realtime |
+| 1:25 – 1:55 | Profile | Profiles + Storage + RLS |
+| 1:55 – 2:50 | Notes CRUD | Create / Read / Update / Delete + optional reminder |
+| 2:50 – 3:40 | Life Spaces | Unique organizer + filter notes |
+| 3:40 – 4:10 | Archive | Soft archive / restore |
+| 4:10 – 4:30 | Logout + close | Secure sign-out + tech stack recap |
 
 ---
 
-### Sign up & validation (0:30 – 1:15)
+## Full Narration Script
 
-> “First, I will show **user registration**. I tap **Create an account** and fill in my full name, email, and password.
+### 1. Opening (0:00 – 0:25)
+
+> “Good day. For my CC106 Final Project, I will demonstrate **NoteVault**, a candy-pink note-taking application built with **Flutter** and **Supabase**.
 >
-> Notice the **password requirements** below the field — the app checks length, uppercase, lowercase, numbers, and special characters. This is our **input validation** working before data is sent to the server.
+> NoteVault supports secure login, personal profiles, notes with optional reminders, **Life Spaces** as my unique organizer, and an **Archive** for notes I want to keep but hide from the main list.
 >
-> After I register, the app does **not** go straight to the dashboard. It signs me out on purpose and returns me to login with a success message — so only registered users who log in can access their notes.”
+> I will walk through the main **user flow** and highlight how the system works.”
 
-**On screen:** Register → show password rules → submit → loading screen (“Creating your account…”) → login screen with green success message.
-
-**Technical points:** Supabase Authentication, custom validation & sanitization, secure sign-up flow.
+**Do on screen:** Open the app → show login / Join screen (Android: briefly show app icon first).
 
 ---
 
-### Login & loading transition (1:15 – 1:45)
+### 2. Sign up — Authentication & validation (0:25 – 1:00)
 
-> “Now I sign in with the account I just created. While it connects, you will see an animated **loading screen** — this also appears when signing out later.
+> “First is **user registration**. I tap **Join**, enter my full name, email, and password. The app validates the email format and requires at least six characters for the password — no complex format rules.
 >
-> Once logged in, I land on the **Notes home screen**. The green sync icon in the app bar means **Supabase Realtime** is connected, so my notes stay updated from the database.”
+> When I create the account, Supabase **Authentication** stores the user. The app then signs me out on purpose and returns me to **Sign in** with a success message. This means only a user who logs in can enter the vault.”
 
-**On screen:** Login → loading (“Signing you in…”) → notes home → point at sync icon.
+**Do on screen:** Join → fill form → Create my vault → loading → Sign in with success message.
 
-**Technical points:** Supabase Auth session, Provider state management, Realtime subscription.
+**System points to mention:** Supabase Auth, input validation / sanitization.
 
 ---
 
-### Profile — edit name & upload photo (1:45 – 2:30)
+### 3. Login — Session & Realtime (1:00 – 1:25)
 
-> “Next is the **profile feature**. I tap the profile icon and edit my display name. The name is limited to 50 characters and validated before saving.
+> “Now I **sign in**. While the app connects, you see an animated loading screen.
 >
-> I can also tap the camera button to **upload a profile picture** from the gallery. The image is stored in **Supabase Storage**, and the profile row in our **PostgreSQL** database is updated through Row Level Security — so each user can only change their own profile.”
+> After login, I reach the **home notes screen**. The green cloud icon means **Supabase Realtime** is connected, so notes and spaces stay synced with the PostgreSQL database.”
 
-**On screen:** Profile → edit name → Save → pick photo → upload → show updated avatar.
+**Do on screen:** Sign in → loading → home → briefly point at sync icon.
 
-**Technical points:** Supabase `profiles` table, Storage bucket `profile-avatars`, RLS, `image_picker`.
+**System points:** Auth session, Provider state, Realtime.
 
 ---
 
-### Notes CRUD (2:30 – 3:45)
+### 4. Profile — Name & photo upload (1:25 – 1:55)
 
-> “The main feature is **notes CRUD** — Create, Read, Update, and Delete.
+> “Next is the **profile**. I can edit my display name and save it to the **profiles** table.
 >
-> I tap **New Note**, enter a title and content, and save. No reminder is required — I can save the note right away.
->
-> If I want a reminder, I tap **Set Reminder**, pick a date and time in the future, and save. The reminder is only validated when I turn it on. On Android, the app also asks for **notification permission** so the phone can alert me later.
->
-> Back on the home screen, my note appears in the grid. I can tap it to **edit**, change the text, or remove the reminder. I can also **delete** a note — the app asks to confirm first.
->
-> All of this is saved to **Supabase** and synced in real time. Notes are also cached locally with **SharedPreferences** for a smoother experience.”
+> I can also upload a profile picture from the gallery. The image goes to **Supabase Storage**, and Row Level Security ensures I can only update my own profile.”
 
-**On screen:** New note → save without reminder → create second note with reminder → edit → delete one note.
+**Do on screen:** Open Profile → edit name → Save → upload photo → show updated avatar → back.
 
-**Technical points:** CRUD on `notes` table, optional `reminder_at`, local notifications, Realtime sync, local cache.
+**System points:** `profiles` table, Storage, RLS, `image_picker`.
 
 ---
 
-### Settings & logout (3:45 – 4:15)
+### 5. Notes CRUD — Core functionality (1:55 – 2:50)
 
-> “In **Settings**, I can review notification info and app details.
+> “The core feature is **notes CRUD** — Create, Read, Update, and Delete.
 >
-> Here is also the **Log out** button. When I tap it and confirm, the app shows a **sign-out loading screen** and safely returns me to the login page.”
-
-**On screen:** Settings → log out → loading (“Signing you out safely…”) → login screen.
-
-**Technical points:** auth sign-out flow, animated loading screen.
-
----
-
-### Closing (4:15 – 5:00)
-
-> “To summarize: NoteVault uses **Flutter**, **Supabase**, **Provider**, Life Spaces organizer, Archive, and **local notifications** for optional reminders.
+> I tap **New Note**, write a title and content, and save. A reminder is **optional** — I can save without one.
 >
-> Security is handled through validation, sanitization, and Supabase **Row Level Security**. Thank you for watching my demonstration.”
+> For a second note, I can set a **reminder** for a future date and time. Only then does reminder validation run. On Android, the app can request notification permission so the phone alerts me later.
+>
+> I can also add a candy color tag and assign the note to a Life Space.
+>
+> Back on home, notes appear in a grid. I can search, open a note to **edit**, or **delete** with confirmation. Everything is stored in Supabase and cached locally for a smoother experience.”
 
-**On screen:** Quick recap — login screen or home screen, then end recording.
+**Do on screen:** New Note → save one without reminder → New Note with reminder + color (optional) → edit → show search briefly.
 
----
-
-## Checklist Before Submitting
-
-- [ ] Video is **3 to 5 minutes** long  
-- [ ] App runs on **simulator, emulator, or physical device**  
-- [ ] You **narrate** each step in your own words  
-- [ ] You showed **sign up, login, profile, notes CRUD, Life Spaces, archive, and logout**  
-- [ ] You mentioned at least these technical features:
-  - Supabase Authentication  
-  - Supabase Database & Realtime  
-  - Profile picture upload (Storage)  
-  - Notes CRUD  
-  - Input validation  
-  - Local notifications (optional reminders)  
-  - Life Spaces organizer + Archive  
-  - Row Level Security (brief mention)  
+**System points:** Notes table CRUD, optional `reminder_at`, local notifications, search, local cache.
 
 ---
 
-## Suggested Demo Account (Optional)
+### 6. Life Spaces — Unique organizer (2:50 – 3:40)
 
-Create a test account before recording so login is smooth:
+> “My unique feature is **Life Spaces**. Instead of only one long list of notes, I organize notes by areas of life — for example School or Work.
+>
+> I open Life Spaces. I can use a **quick template**, or create my own space. When creating, I set a name, optional motto, **mood vibe** — Focus, Chill, Boost, or Reset — a **weekly note goal**, emoji, candy color, and I can turn on **Today’s Focus** so that space is highlighted on home.
+>
+> After saving, I go back home, filter by that space, and assign notes to it. So Life Spaces is not just a folder — it is a personalized board with mood, goals, and focus.”
 
-- **Email:** `demo@smartnotes.app` (or your own test email)  
-- **Password:** A strong password that passes all requirements (e.g. `Demo1234!`)
+**Do on screen:** Life Spaces → quick template **or** New Space (show motto / mood / goal / focus) → Create → home → filter chip → open a note assigned to that space (or assign one).
 
-Run `supabase/sql/full_schema.sql` in Supabase and enable **Email sign-ups** in the dashboard before recording.
+**System points:** `spaces` table, note `space_id`, filter on home, unique organizer.
 
 ---
 
-## Recording Tips
+### 7. Archive — Soft storage (3:40 – 4:10)
 
-1. Use **screen recording** on your phone or emulator.  
-2. Speak clearly — pretend you are presenting to Mrs. Manalo.  
-3. Do one smooth run; edit only if you make a big mistake.  
-4. On Android, show the **custom app icon** briefly at the start.  
-5. Keep the video focused on the app — no long silent pauses.
+> “NoteVault also has an **Archive**. If I no longer need a note on the main screen, I can archive it instead of deleting it permanently.
+>
+> Archived notes appear in the Archive view. I can **restore** them anytime, or delete them for good when I am ready.”
+
+**Do on screen:** Archive a note → open Archive icon → show archived note → Restore (optional).
+
+**System points:** `is_archived` / `archived_at`, restore flow.
+
+---
+
+### 8. Logout & closing (4:10 – 4:30)
+
+> “Finally, in **Settings**, I log out. The app shows a safe sign-out loading screen and returns to login.
+>
+> To summarize: NoteVault uses **Flutter**, **Supabase Authentication**, **PostgreSQL** with **Row Level Security**, **Realtime**, **Storage** for avatars, **Provider** for state, Life Spaces, Archive, and optional **local notifications**.
+>
+> Thank you for watching my demonstration.”
+
+**Do on screen:** Settings → Log out → loading → login → end.
+
+---
+
+## System Functionality Checklist (say or show at least these)
+
+- [ ] Supabase Authentication (sign up / login / logout)  
+- [ ] Input validation (email, name, password min length, notes)  
+- [ ] Profile edit + profile picture (Supabase Storage)  
+- [ ] Notes CRUD (Create, Read, Update, Delete)  
+- [ ] Optional note reminders + local notifications (Android)  
+- [ ] Search notes  
+- [ ] Life Spaces organizer (templates, mood, motto, weekly goal, Today’s Focus, filter)  
+- [ ] Archive / restore  
+- [ ] Supabase Database + Realtime sync  
+- [ ] Row Level Security (brief mention)  
+
+---
+
+## Before You Record
+
+1. Enable Email sign-ups in Supabase Dashboard.  
+2. Run `supabase/sql/full_schema.sql` (and Life Spaces SQL if needed).  
+3. Use a demo account (any email + password with 6+ characters).  
+4. Keep the video **3 to 5 minutes** — follow the timing table above.  
+5. Speak clearly; tap slowly so the narration matches the screen.
+
+---
+
+## Short “memory card” (if you forget lines)
+
+1. Intro → NoteVault, Flutter + Supabase  
+2. Join → Sign in → Home (Realtime)  
+3. Profile → name + photo  
+4. Notes CRUD + optional reminder  
+5. Life Spaces → mood, goal, focus, filter  
+6. Archive → restore  
+7. Logout → Flutter, Supabase, RLS — thank you  

@@ -30,9 +30,20 @@ RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
 BEGIN
-  IF NEW.reminder_at IS NOT NULL AND NEW.reminder_at <= NOW() THEN
+  IF NEW.reminder_at IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  -- Allow edits that keep an existing reminder unchanged (even if it already passed).
+  IF TG_OP = 'UPDATE'
+     AND NEW.reminder_at IS NOT DISTINCT FROM OLD.reminder_at THEN
+    RETURN NEW;
+  END IF;
+
+  IF NEW.reminder_at <= NOW() THEN
     RAISE EXCEPTION 'Reminder must be in the future when set';
   END IF;
+
   RETURN NEW;
 END;
 $$;

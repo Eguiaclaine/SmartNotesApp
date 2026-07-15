@@ -1,18 +1,3 @@
-class PasswordRequirements {
-  const PasswordRequirements(this.password);
-
-  final String password;
-
-  bool get hasMinLength => password.length >= 8;
-  bool get hasUppercase => RegExp(r'[A-Z]').hasMatch(password);
-  bool get hasLowercase => RegExp(r'[a-z]').hasMatch(password);
-  bool get hasNumber => RegExp(r'[0-9]').hasMatch(password);
-  bool get hasSpecial => RegExp(r'[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\;/`~]').hasMatch(password);
-
-  bool get isValid =>
-      hasMinLength && hasUppercase && hasLowercase && hasNumber && hasSpecial;
-}
-
 class ValidationUtils {
   static final _emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
@@ -23,14 +8,13 @@ class ValidationUtils {
     return null;
   }
 
+  /// Password: required only. No uppercase / number / symbol rules.
+  /// Minimum length 6 matches Supabase Auth default so sign-up does not fail server-side.
   static String? validatePassword(String? value, {bool forSignUp = false}) {
     if (value == null || value.isEmpty) return 'Enter a password';
-    if (forSignUp) {
-      final requirements = PasswordRequirements(value);
-      if (!requirements.isValid) return 'Password does not meet requirements';
-      return null;
+    if (forSignUp && value.length < 6) {
+      return 'Password must be at least 6 characters';
     }
-    if (value.length < 6) return 'Password must be at least 6 characters';
     return null;
   }
 
@@ -71,6 +55,13 @@ class ValidationUtils {
     final sanitized = SanitizationUtils.sanitizeText(value, maxLength: 40);
     if (sanitized.isEmpty) return 'Enter a space name';
     if (sanitized.length < 2) return 'Space name is too short';
+    return null;
+  }
+
+  static String? validateSpaceMotto(String? value) {
+    if (value == null || value.trim().isEmpty) return null;
+    final sanitized = SanitizationUtils.sanitizeText(value, maxLength: 80);
+    if (sanitized.length > 80) return 'Motto must be 80 characters or less';
     return null;
   }
 }

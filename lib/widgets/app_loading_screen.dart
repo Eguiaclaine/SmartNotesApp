@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_theme.dart';
+
 /// Full-screen loading used for app startup, sign-in, and sign-out transitions.
 class AppLoadingScreen extends StatefulWidget {
   const AppLoadingScreen({
@@ -20,6 +22,7 @@ class _AppLoadingScreenState extends State<AppLoadingScreen>
   late final AnimationController _controller;
   late final Animation<double> _scale;
   late final Animation<double> _fade;
+  late final Animation<double> _glow;
 
   @override
   void initState() {
@@ -28,10 +31,13 @@ class _AppLoadingScreenState extends State<AppLoadingScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1400),
     )..repeat(reverse: true);
-    _scale = Tween<double>(begin: 0.92, end: 1.08).animate(
+    _scale = Tween<double>(begin: 0.92, end: 1.06).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
-    _fade = Tween<double>(begin: 0.55, end: 1).animate(
+    _fade = Tween<double>(begin: 0.6, end: 1).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+    _glow = Tween<double>(begin: 0.2, end: 0.45).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
   }
@@ -44,18 +50,16 @@ class _AppLoadingScreenState extends State<AppLoadingScreen>
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-
     return Scaffold(
       body: DecoratedBox(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              scheme.primaryContainer.withValues(alpha: 0.45),
-              scheme.surface,
-              scheme.secondaryContainer.withValues(alpha: 0.25),
+              AppColors.candyBlush,
+              AppColors.lightBackground,
+              Color(0xFFFFEAF2),
             ],
           ),
         ),
@@ -73,53 +77,60 @@ class _AppLoadingScreenState extends State<AppLoadingScreen>
                         scale: _scale.value,
                         child: Opacity(
                           opacity: _fade.value,
-                          child: child,
+                          child: Container(
+                            width: 108,
+                            height: 108,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: const LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  AppColors.candyPink,
+                                  AppColors.candyRose,
+                                  AppColors.candyDeep,
+                                ],
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.candyRose.withValues(
+                                    alpha: _glow.value,
+                                  ),
+                                  blurRadius: 28,
+                                  offset: const Offset(0, 12),
+                                ),
+                              ],
+                            ),
+                            child: child,
+                          ),
                         ),
                       );
                     },
-                    child: Container(
-                      width: 96,
-                      height: 96,
-                      decoration: BoxDecoration(
-                        color: scheme.primaryContainer.withValues(alpha: 0.65),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: scheme.primary.withValues(alpha: 0.18),
-                            blurRadius: 24,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: Icon(
-                        widget.icon,
-                        size: 48,
-                        color: scheme.primary,
-                      ),
-                    ),
+                    child: Icon(widget.icon, size: 48, color: Colors.white),
                   ),
                   const SizedBox(height: 28),
                   Text(
                     'NoteVault',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.candyRose,
                         ),
                   ),
                   const SizedBox(height: 12),
                   Text(
                     widget.message,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: scheme.onSurfaceVariant,
+                          color: AppColors.softInk.withValues(alpha: 0.7),
                         ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 28),
-                  SizedBox(
-                    width: 32,
-                    height: 32,
+                  const SizedBox(
+                    width: 30,
+                    height: 30,
                     child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      color: scheme.primary,
+                      strokeWidth: 2.8,
+                      color: AppColors.candyRose,
                     ),
                   ),
                 ],

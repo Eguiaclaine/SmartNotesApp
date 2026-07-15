@@ -60,7 +60,18 @@ class NotesService {
   Future<void> updateNote(Note note) async {
     final client = _client;
     if (client == null) return;
-    await client.from(_table).update(note.toSupabase()).eq('id', note.id);
+
+    final response = await client
+        .from(_table)
+        .update(note.toSupabaseUpdate())
+        .eq('id', note.id)
+        .eq('user_id', note.userId)
+        .select()
+        .maybeSingle();
+
+    if (response == null) {
+      throw Exception('Note update failed. Check connection or re-run supabase/sql/13_notes_update_fix.sql');
+    }
   }
 
   Future<void> deleteNote(String id) async {
