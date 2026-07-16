@@ -2,12 +2,14 @@
 -- full_schema.sql
 -- Smart Notes App — ALL-IN-ONE schema (copy & paste into Supabase SQL Editor)
 -- =============================================================================
--- Merges: 01_extensions, 02_profiles, 03_notes, 04_storage,
---         05_rls_policies, 06_indexes, 07_functions_triggers, 08_realtime,
---         09_auth_setup
+-- Merges: 01–14 (extensions, profiles, notes, spaces/Life Spaces, storage,
+--         RLS, indexes, triggers, realtime, auth, archive, enhanced spaces,
+--         password notes, note-update fix, life-spaces align)
 --
 -- Safe to re-run: uses IF NOT EXISTS, DROP POLICY IF EXISTS, and idempotent
 -- realtime publication check.
+-- Existing projects that already ran an older full_schema: also run
+--   14_life_spaces_align.sql and 13_notes_update_fix.sql if needed.
 --
 -- BEFORE running: enable Email sign-ups in Supabase Dashboard
 --   Authentication → Providers → Email → Enable sign ups
@@ -109,13 +111,52 @@ CREATE TABLE IF NOT EXISTS public.spaces (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-COMMENT ON TABLE public.spaces IS 'NoteVault Life Spaces — unique organizer boards for notes';
+COMMENT ON TABLE public.spaces IS
+  'NoteVault Life Spaces — organizer boards (emoji, color, mood, motto, weekly goal, focus). Flutter SpacesProvider reads/writes this table for Notes + Life Spaces screens.';
+COMMENT ON COLUMN public.spaces.mood IS 'focus | chill | boost | reset';
+COMMENT ON COLUMN public.spaces.weekly_goal IS 'Target notes per week (1-50)';
+COMMENT ON COLUMN public.spaces.is_focus IS 'Today''s Focus Space';
 
 ALTER TABLE public.spaces ADD COLUMN IF NOT EXISTS motto TEXT;
 ALTER TABLE public.spaces ADD COLUMN IF NOT EXISTS mood TEXT NOT NULL DEFAULT 'focus';
 ALTER TABLE public.spaces ADD COLUMN IF NOT EXISTS weekly_goal INTEGER NOT NULL DEFAULT 5;
 ALTER TABLE public.spaces ADD COLUMN IF NOT EXISTS is_focus BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE public.spaces ADD COLUMN IF NOT EXISTS sort_order INTEGER NOT NULL DEFAULT 0;
+
+-- Align with Flutter SpaceMood + SpacesProvider validation (same as 14_life_spaces_align)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'spaces_mood_check'
+      AND conrelid = 'public.spaces'::regclass
+  ) THEN
+    ALTER TABLE public.spaces
+      ADD CONSTRAINT spaces_mood_check
+      CHECK (mood IN ('focus', 'chill', 'boost', 'reset'));
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'spaces_weekly_goal_check'
+      AND conrelid = 'public.spaces'::regclass
+  ) THEN
+    ALTER TABLE public.spaces
+      ADD CONSTRAINT spaces_weekly_goal_check
+      CHECK (weekly_goal >= 1 AND weekly_goal <= 50);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'spaces_motto_len_check'
+      AND conrelid = 'public.spaces'::regclass
+  ) THEN
+    ALTER TABLE public.spaces
+      ADD CONSTRAINT spaces_motto_len_check
+      CHECK (motto IS NULL OR char_length(motto) <= 80);
+  END IF;
+END;
+$$;
 
 ALTER TABLE public.notes
   ADD COLUMN IF NOT EXISTS is_archived BOOLEAN NOT NULL DEFAULT FALSE;
@@ -243,6 +284,7 @@ CREATE INDEX IF NOT EXISTS idx_notes_user_created ON public.notes (user_id, crea
 CREATE INDEX IF NOT EXISTS idx_notes_reminder_at ON public.notes (reminder_at) WHERE reminder_at IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_profiles_email ON public.profiles (email);
 CREATE INDEX IF NOT EXISTS idx_spaces_user_id ON public.spaces (user_id);
+CREATE INDEX IF NOT EXISTS idx_spaces_user_focus ON public.spaces (user_id, is_focus);
 CREATE INDEX IF NOT EXISTS idx_notes_space_id ON public.notes (space_id);
 CREATE INDEX IF NOT EXISTS idx_notes_is_archived ON public.notes (user_id, is_archived);
 
@@ -299,6 +341,9 @@ CREATE TRIGGER validate_note_reminder_before_write
   BEFORE INSERT OR UPDATE OF reminder_at ON public.notes
   FOR EACH ROW
   EXECUTE FUNCTION public.validate_note_reminder();
+
+COMMENT ON FUNCTION public.validate_note_reminder IS
+  'Allows note edits with unchanged past reminders; only blocks newly set past reminders';
 
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER

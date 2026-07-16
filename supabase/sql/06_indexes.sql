@@ -18,3 +18,15 @@ CREATE INDEX IF NOT EXISTS idx_notes_reminder_at
 
 CREATE INDEX IF NOT EXISTS idx_profiles_email
   ON public.profiles (email);
+
+CREATE INDEX IF NOT EXISTS idx_spaces_user_id
+  ON public.spaces (user_id);
+
+CREATE INDEX IF NOT EXISTS idx_spaces_user_focus
+  ON public.spaces (user_id, is_focus);
+
+CREATE INDEX IF NOT EXISTS idx_notes_space_id
+  ON public.notes (space_id);
+
+CREATE INDEX IF NOT EXISTS idx_notes_is_archived
+  ON public.notes (user_id, is_archived);

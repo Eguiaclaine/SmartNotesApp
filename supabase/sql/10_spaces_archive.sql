@@ -17,7 +17,10 @@ CREATE TABLE IF NOT EXISTS public.spaces (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-COMMENT ON TABLE public.spaces IS 'NoteVault Life Spaces — unique organizer boards for notes';
+COMMENT ON TABLE public.spaces IS
+  'NoteVault Life Spaces — organizer boards (emoji, color, mood, motto, weekly goal, focus). Flutter SpacesProvider reads/writes this table for Notes + Life Spaces screens.';
+
+-- After this file, run 11_spaces_enhanced.sql (or prefer 14_life_spaces_align.sql one-shot).
 
 ALTER TABLE public.notes
   ADD COLUMN IF NOT EXISTS is_archived BOOLEAN NOT NULL DEFAULT FALSE;

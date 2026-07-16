@@ -38,38 +38,31 @@ class SmartNotesApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => app_auth.AuthProvider()),
       ],
-      // One stable MaterialApp. Session providers live under a nested Navigator
-      // so pushed screens (NoteEditor, Life Spaces, Profile) still see them.
-      child: MaterialApp(
-        title: 'NoteVault',
-        debugShowCheckedModeBanner: false,
-        themeMode: ThemeMode.light,
-        theme: AppTheme.light(),
-        home: _AppRoot(supabaseReady: supabaseReady),
-      ),
+      child: _NoteVaultRoot(supabaseReady: supabaseReady),
     );
   }
 }
 
-class _AppRoot extends StatelessWidget {
-  const _AppRoot({required this.supabaseReady});
+/// Hosts auth + optional session providers ABOVE MaterialApp so every pushed
+/// route (Note Editor, Life Spaces, Profile) can read Notes/Spaces/Profile.
+class _NoteVaultRoot extends StatelessWidget {
+  const _NoteVaultRoot({required this.supabaseReady});
 
   final bool supabaseReady;
 
   @override
   Widget build(BuildContext context) {
     if (!supabaseReady) {
-      return const _BackendUnavailableScreen();
+      return MaterialApp(
+        title: 'NoteVault',
+        debugShowCheckedModeBanner: false,
+        themeMode: ThemeMode.light,
+        theme: AppTheme.light(),
+        home: const _BackendUnavailableScreen(),
+      );
     }
 
     final authProvider = context.watch<app_auth.AuthProvider>();
-
-    if (authProvider.isTransitioning) {
-      return AppLoadingScreen(
-        message: authProvider.loadingMessage,
-        icon: _loadingIcon(authProvider.loadingPhase),
-      );
-    }
 
     return StreamBuilder<AuthState>(
       stream: Supabase.instance.client.auth.onAuthStateChange,
@@ -80,32 +73,44 @@ class _AppRoot extends StatelessWidget {
       builder: (context, snapshot) {
         final session = snapshot.data?.session ??
             Supabase.instance.client.auth.currentSession;
-
-        if (snapshot.connectionState == ConnectionState.waiting &&
-            session == null) {
-          return const AppLoadingScreen(message: 'Loading NoteVault...');
-        }
-
         final user = session?.user;
+
+        // Logged out (or waiting for first session)
         if (user == null) {
-          return const AuthScreen();
+          final home = authProvider.isTransitioning
+              ? AppLoadingScreen(
+                  message: authProvider.loadingMessage,
+                  icon: _loadingIcon(authProvider.loadingPhase),
+                )
+              : snapshot.connectionState == ConnectionState.waiting
+                  ? const AppLoadingScreen(message: 'Loading NoteVault...')
+                  : const AuthScreen();
+
+          return MaterialApp(
+            key: const ValueKey('notevault-auth-shell'),
+            title: 'NoteVault',
+            debugShowCheckedModeBanner: false,
+            themeMode: ThemeMode.light,
+            theme: AppTheme.light(),
+            home: home,
+          );
         }
 
-        return MultiProvider(
-          key: ValueKey('session-${user.id}'),
-          providers: [
-            ChangeNotifierProvider(
-              create: (_) => NotesProvider(user.id, supabaseReady: true),
-            ),
-            ChangeNotifierProvider(
-              create: (_) => SpacesProvider(user.id, supabaseReady: true),
-            ),
-            ChangeNotifierProvider(
-              create: (_) => ProfileProvider(user.id, supabaseReady: true),
-            ),
-          ],
-          // Nested navigator keeps NoteEditor / Spaces / Profile under providers.
-          child: const _AuthenticatedNavigator(),
+        // Logged in: session providers wrap MaterialApp so Note Editor / Spaces /
+        // Profile routes always find SpacesProvider + friends.
+        return _SessionScope(
+          key: ValueKey('session-scope-${user.id}'),
+          userId: user.id,
+          child: MaterialApp(
+            key: const ValueKey('notevault-main-shell'),
+            title: 'NoteVault',
+            debugShowCheckedModeBanner: false,
+            themeMode: ThemeMode.light,
+            theme: AppTheme.light(),
+            // Never replace this home while logged in — swapping to a loading
+            // screen disposed pushed routes and triggered `_dependents.isEmpty`.
+            home: const NotesHomeScreen(),
+          ),
         );
       },
     );
@@ -121,19 +126,47 @@ class _AppRoot extends StatelessWidget {
   }
 }
 
-/// Hosts app routes under session providers (Notes / Spaces / Profile).
-class _AuthenticatedNavigator extends StatelessWidget {
-  const _AuthenticatedNavigator();
+/// Owns session ChangeNotifiers so they are not recreated/disposed on every
+/// auth stream tick (TOKEN_REFRESHED), which caused `_dependents.isEmpty`.
+class _SessionScope extends StatefulWidget {
+  const _SessionScope({
+    super.key,
+    required this.userId,
+    required this.child,
+  });
+
+  final String userId;
+  final Widget child;
+
+  @override
+  State<_SessionScope> createState() => _SessionScopeState();
+}
+
+class _SessionScopeState extends State<_SessionScope> {
+  late final NotesProvider _notes =
+      NotesProvider(widget.userId, supabaseReady: true);
+  late final SpacesProvider _spaces =
+      SpacesProvider(widget.userId, supabaseReady: true);
+  late final ProfileProvider _profile =
+      ProfileProvider(widget.userId, supabaseReady: true);
+
+  @override
+  void dispose() {
+    _notes.dispose();
+    _spaces.dispose();
+    _profile.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Navigator(
-      onGenerateRoute: (settings) {
-        return MaterialPageRoute<void>(
-          settings: settings,
-          builder: (_) => const NotesHomeScreen(),
-        );
-      },
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider<NotesProvider>.value(value: _notes),
+        ChangeNotifierProvider<SpacesProvider>.value(value: _spaces),
+        ChangeNotifierProvider<ProfileProvider>.value(value: _profile),
+      ],
+      child: widget.child,
     );
   }
 }

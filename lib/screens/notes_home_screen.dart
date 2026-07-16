@@ -77,7 +77,7 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> with WidgetsBindingOb
                   ? 'Archive vault'
                   : (filterSpace != null
                       ? '${filterSpace.emoji} ${filterSpace.name}'
-                      : 'Your candy note space'),
+                      : 'All notes'),
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
                     color: scheme.onSurfaceVariant,
                     fontWeight: FontWeight.w600,
@@ -95,6 +95,12 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> with WidgetsBindingOb
                 color: Colors.green.shade500,
               ),
             ),
+          CandyIconButton(
+            icon: Icons.notes_rounded,
+            tooltip: 'All notes',
+            selected: notesProvider.isShowingAllNotes,
+            onPressed: notesProvider.showAllNotes,
+          ),
           CandyIconButton(
             icon: Icons.auto_awesome_rounded,
             tooltip: 'Life Spaces',
@@ -198,9 +204,10 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> with WidgetsBindingOb
                               Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 4),
                                 child: FilterChip(
-                                  label: const Text('All'),
-                                  selected: notesProvider.filterSpaceId == null,
-                                  onSelected: (_) => notesProvider.setFilterSpaceId(null),
+                                  avatar: const Icon(Icons.notes_rounded, size: 16),
+                                  label: const Text('All notes'),
+                                  selected: notesProvider.isShowingAllNotes,
+                                  onSelected: (_) => notesProvider.showAllNotes(),
                                 ),
                               ),
                               ...spacesProvider.spaces.map(

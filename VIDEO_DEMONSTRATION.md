@@ -99,7 +99,7 @@
 >
 > After saving, I go back home, filter by that space, and assign notes to it. So Life Spaces is not just a folder — it is a personalized board with mood, goals, and focus.”
 
-**Do on screen:** Life Spaces → quick template **or** New Space (show motto / mood / goal / focus) → Create → home → filter chip → open a note assigned to that space (or assign one).
+**Do on screen:** Life Spaces → quick template **or** New Space (show motto / mood / goal / focus) → Create → home → filter chip → open a note assigned to that space (or assign one). Tap **All notes** in the AppBar (notes icon) to return to the full list.
 
 **System points:** `spaces` table, note `space_id`, filter on home, unique organizer.
 
@@ -111,7 +111,7 @@
 >
 > Archived notes appear in the Archive view. I can **restore** them anytime, or delete them for good when I am ready.”
 
-**Do on screen:** Archive a note → open Archive icon → show archived note → Restore (optional).
+**Do on screen:** Archive a note → open Archive icon → show archived note → Restore (optional). Tap **All notes** in the header to leave Archive and see the full active list.
 
 **System points:** `is_archived` / `archived_at`, restore flow.
 

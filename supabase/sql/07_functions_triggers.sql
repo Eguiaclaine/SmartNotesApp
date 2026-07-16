@@ -25,6 +25,12 @@ CREATE TRIGGER set_notes_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_updated_at();
 
+DROP TRIGGER IF EXISTS set_spaces_updated_at ON public.spaces;
+CREATE TRIGGER set_spaces_updated_at
+  BEFORE UPDATE ON public.spaces
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_updated_at();
+
 CREATE OR REPLACE FUNCTION public.validate_note_reminder()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -47,6 +53,9 @@ BEGIN
   RETURN NEW;
 END;
 $$;
+
+COMMENT ON FUNCTION public.validate_note_reminder IS
+  'Allows note edits with unchanged past reminders; only blocks newly set past reminders';
 
 DROP TRIGGER IF EXISTS validate_note_reminder_before_write ON public.notes;
 CREATE TRIGGER validate_note_reminder_before_write

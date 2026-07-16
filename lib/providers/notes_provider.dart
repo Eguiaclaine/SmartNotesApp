@@ -100,6 +100,16 @@ class NotesProvider extends ChangeNotifier {
     _safeNotify();
   }
 
+  /// Home header “All notes”: clear space filter + leave Archive.
+  bool get isShowingAllNotes =>
+      !_showArchivedOnly && _filterSpaceId == null;
+
+  void showAllNotes() {
+    _showArchivedOnly = false;
+    _filterSpaceId = null;
+    _safeNotify();
+  }
+
   void _safeNotify() {
     if (!_disposed) notifyListeners();
   }

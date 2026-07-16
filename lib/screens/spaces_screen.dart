@@ -446,8 +446,12 @@ class SpacesScreen extends StatelessWidget {
       },
     );
 
-    nameController.dispose();
-    mottoController.dispose();
+    // Dispose after the sheet route fully finishes popping (avoids
+    // "TextEditingController was used after being disposed" during dismiss).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      nameController.dispose();
+      mottoController.dispose();
+    });
   }
 }
 
